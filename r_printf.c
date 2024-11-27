@@ -21,9 +21,7 @@ void arg_parse(const char* restrict* fmt, va_list* args) {
         char c = va_arg(*args, int);
         write(STDOUT_FILENO, &c, 1);
         *fmt += 2;
-    }
-
-    if ((*fmt)[1] == 'd') {
+    } else if ((*fmt)[1] == 'd') {
         int i = va_arg(*args, int);
         print_num(i);
         *fmt += 2;
