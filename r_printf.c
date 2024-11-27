@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <string.h>
 #include <unistd.h>
 
 int print_int(int n) {
@@ -48,6 +49,12 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
         double d = va_arg(*args, double);
         *fmt += 2;
         return print_double(d);
+    } else if ((*fmt)[1] == 's') {
+        char* s = va_arg(*args, char*);
+        *fmt += 2;
+        int n = strlen(s);
+        write(STDOUT_FILENO, s, n);
+        return n;
     } else if ((*fmt)[1] == '%') {
         write(STDOUT_FILENO, *fmt, 1);
         *fmt += 2;
