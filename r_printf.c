@@ -37,6 +37,9 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
     }
 }
 
+// TODO: proper error handling:
+// 1. Check for write() errors (man 2 write)
+// 2. Set errno on error (man 3p fprintf)
 int r_printf(const char* restrict fmt, ...) {
     va_list args;
     va_start(args, fmt);
