@@ -1,28 +1,19 @@
 #include <stdarg.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-// log base 10 of 2
-#define LOG2 0.301029995664
-
 void print_num(int n) {
-    int i = 0;
-    char s[(size_t)(8 * sizeof(int) * LOG2 + 2)];
+    char c = (n % 10) + '0';
     if (n < 0) {
         n = -n;
-        s[i] = '-';
-        i++;
+        c = '-';
+        write(STDOUT_FILENO, &c, 1);
+        print_num(n);
+    } else if (n < 10) {
+        write(STDOUT_FILENO, &c, 1);
+    } else {
+        print_num(n / 10);
+        write(STDOUT_FILENO, &c, 1);
     }
-    int p = 1;
-    for (int m = n; m > 9; m /= 10) {
-        p *= 10;
-    }
-
-    for (int q = p; q > 0; q /= 10) {
-        s[i] = (n / q) % 10 + '0';
-        i++;
-    }
-    write(STDOUT_FILENO, s, i);
 }
 
 void arg_parse(const char* restrict* fmt, va_list* args) {
