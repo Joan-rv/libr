@@ -1,21 +1,37 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-int print_num(int n) {
+int print_int(int n) {
     char c = (n % 10) + '0';
     if (n < 0) {
         n = -n;
         c = '-';
         write(STDOUT_FILENO, &c, 1);
-        return 1 + print_num(n);
+        return 1 + print_int(n);
     } else if (n < 10) {
         write(STDOUT_FILENO, &c, 1);
         return 1;
     } else {
-        int m = print_num(n / 10);
+        int m = print_int(n / 10);
         write(STDOUT_FILENO, &c, 1);
         return 1 + m;
     }
+}
+
+int print_double(double n) {
+    print_int((int)n);
+    if (n < 0) {
+        n = -n;
+    }
+    char c = '.';
+    int m = write(STDOUT_FILENO, &c, 1);
+    int d = (n - (int)n) * 10;
+    for (int i = 0; i < 6; i++) {
+        c = d % 10 + '0';
+        write(STDOUT_FILENO, &c, 1);
+        d *= 10;
+    }
+    return m + 7;
 }
 
 int arg_parse(const char* restrict* fmt, va_list* args) {
@@ -24,10 +40,14 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
         *fmt += 2;
         write(STDOUT_FILENO, &c, 1);
         return 1;
-    } else if ((*fmt)[1] == 'd') {
+    } else if ((*fmt)[1] == 'd' || (*fmt)[1] == 'i') {
         int i = va_arg(*args, int);
         *fmt += 2;
-        return print_num(i);
+        return print_int(i);
+    } else if ((*fmt)[1] == 'f') {
+        double d = va_arg(*args, double);
+        *fmt += 2;
+        return print_double(d);
     } else if ((*fmt)[1] == '%') {
         write(STDOUT_FILENO, *fmt, 1);
         *fmt += 2;
