@@ -19,12 +19,12 @@ int print_int(int n) {
 }
 
 int print_double(double n) {
-    print_int((int)n);
+    int m = print_int((int)n);
     if (n < 0) {
         n = -n;
     }
     char c = '.';
-    int m = write(STDOUT_FILENO, &c, 1);
+    write(STDOUT_FILENO, &c, 1);
     int d = (n - (int)n) * 10;
     for (int i = 0; i < 6; i++) {
         c = d % 10 + '0';
