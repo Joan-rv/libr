@@ -4,19 +4,22 @@
 
 int print_int(int n) {
     char c = (n % 10) + '0';
+    int m = 0;
     if (n < 0) {
         n = -n;
         c = '-';
-        write(STDOUT_FILENO, &c, 1);
-        return 1 + print_int(n);
-    } else if (n < 10) {
-        write(STDOUT_FILENO, &c, 1);
-        return 1;
-    } else {
-        int m = print_int(n / 10);
-        write(STDOUT_FILENO, &c, 1);
+        if (write(STDOUT_FILENO, &c, 1) < 0) {
+            return -1;
+        }
+        m = print_int(n);
         return 1 + m;
+    } else if (n > 9) {
+        m = print_int(n / 10);
     }
+    if (write(STDOUT_FILENO, &c, 1) < 0) {
+        return -1;
+    }
+    return 1 + m;
 }
 
 int print_double(double n) {
@@ -25,11 +28,15 @@ int print_double(double n) {
         n = -n;
     }
     char c = '.';
-    write(STDOUT_FILENO, &c, 1);
+    if (write(STDOUT_FILENO, &c, 1) < 0) {
+        return -1;
+    }
     int d = (n - (int)n) * 10;
     for (int i = 0; i < 6; i++) {
         c = d % 10 + '0';
-        write(STDOUT_FILENO, &c, 1);
+        if (write(STDOUT_FILENO, &c, 1) < 0) {
+            return -1;
+        }
         d *= 10;
     }
     return m + 7;
@@ -39,8 +46,7 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
     if ((*fmt)[1] == 'c') {
         char c = va_arg(*args, int);
         *fmt += 2;
-        write(STDOUT_FILENO, &c, 1);
-        return 1;
+        return write(STDOUT_FILENO, &c, 1);
     } else if ((*fmt)[1] == 'd' || (*fmt)[1] == 'i') {
         int i = va_arg(*args, int);
         *fmt += 2;
@@ -53,20 +59,15 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
         char* s = va_arg(*args, char*);
         *fmt += 2;
         int n = strlen(s);
-        write(STDOUT_FILENO, s, n);
-        return n;
+        return write(STDOUT_FILENO, s, n);
     } else if ((*fmt)[1] == '%') {
-        write(STDOUT_FILENO, *fmt, 1);
         *fmt += 2;
-        return 1;
+        return write(STDOUT_FILENO, *fmt - 2, 1);
     } else {
         return -1;
     }
 }
 
-// TODO: proper error handling:
-// 1. Check for write() errors (man 2 write)
-// 2. Set errno on error (man 3p fprintf)
 int r_printf(const char* restrict fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -74,7 +75,9 @@ int r_printf(const char* restrict fmt, ...) {
     while (fmt[i] != '\0') {
         if (fmt[i] == '%') {
             // arg parse
-            write(STDOUT_FILENO, fmt, i);
+            if (write(STDOUT_FILENO, fmt, i) == -1) {
+                return -1;
+            }
             n += i;
             fmt += i;
             int m;
@@ -88,7 +91,9 @@ int r_printf(const char* restrict fmt, ...) {
             i++;
         }
     }
-    write(STDOUT_FILENO, fmt, i);
+    if (write(STDOUT_FILENO, fmt, i) < 0) {
+        return -1;
+    }
     n += i;
     va_end(args);
     return n;
