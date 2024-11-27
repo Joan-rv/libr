@@ -25,6 +25,9 @@ void arg_parse(const char* restrict* fmt, va_list* args) {
         int i = va_arg(*args, int);
         print_num(i);
         *fmt += 2;
+    } else if ((*fmt)[1] == '%') {
+        write(STDOUT_FILENO, *fmt, 1);
+        *fmt += 2;
     }
 }
 
