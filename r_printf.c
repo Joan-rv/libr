@@ -11,9 +11,9 @@ char digit_to_char(unsigned int d) {
     }
 }
 
-int print_int(int n, unsigned int b) {
     char c = digit_to_char(n % b);
     int m = 0;
+int print_int(int n, int base) {
     if (n < 0) {
         n = -n;
         c = '-';
@@ -24,8 +24,8 @@ int print_int(int n, unsigned int b) {
             return -1;
         }
         return 1 + m;
-    } else if (n > 9) {
         if ((m = print_int(n / b, b)) < 0) {
+    } else if (n >= base) {
             return -1;
         }
     }
@@ -40,6 +40,7 @@ int print_uint(unsigned int n, unsigned int b) {
     int m = 0;
     if (n > b) {
         if ((m = print_uint(n / b, b)) < 0) {
+    if (n >= base) {
             return -1;
         }
     }
