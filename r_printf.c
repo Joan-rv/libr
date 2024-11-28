@@ -1,7 +1,18 @@
+#include <errno.h>
 #include <math.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+
+int add_or_error(ssize_t r, int b) {
+    if (r < 0) {
+        return -1;
+    } else if (r + b < b) {
+        errno = EOVERFLOW;
+        return -1;
+    }
+    return r + b;
+}
 
 char digit_to_char(unsigned int d) {
     if (d < 10) {
@@ -11,43 +22,42 @@ char digit_to_char(unsigned int d) {
     }
 }
 
-    char c = digit_to_char(n % b);
-    int m = 0;
 int print_int(int n, int base) {
+    char c = digit_to_char(n % base);
+    int b = 0;
     if (n < 0) {
         n = -n;
         c = '-';
-        if (write(STDOUT_FILENO, &c, 1) < 0) {
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
-        if ((m = print_int(n, b)) < 0) {
+        if ((b = add_or_error(print_int(n, base), b)) < 0) {
             return -1;
         }
-        return 1 + m;
-        if ((m = print_int(n / b, b)) < 0) {
+        return b;
     } else if (n >= base) {
+        if ((b = add_or_error(print_int(n / base, base), b)) < 0) {
             return -1;
         }
     }
-    if (write(STDOUT_FILENO, &c, 1) < 0) {
+    if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
         return -1;
     }
-    return 1 + m;
+    return b;
 }
 
-int print_uint(unsigned int n, unsigned int b) {
-    char c = digit_to_char(n % b);
-    int m = 0;
-    if (n > b) {
-        if ((m = print_uint(n / b, b)) < 0) {
+int print_uint(unsigned int n, unsigned int base) {
+    char c = digit_to_char(n % base);
+    int b = 0;
     if (n >= base) {
+        if ((b = print_uint(n / base, base)) < 0) {
             return -1;
         }
     }
-    if (write(STDOUT_FILENO, &c, 1) < 0) {
+    if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
         return -1;
     }
-    return 1 + m;
+    return b;
 }
 
 int print_pointer(void* p) {
@@ -56,59 +66,56 @@ int print_pointer(void* p) {
         return write(STDOUT_FILENO, nil, 5);
     }
     char prefix[] = "0x";
-    int m;
-    if ((m = write(STDOUT_FILENO, prefix, 2)) < 0) {
+    int b = 0;
+    if ((b = add_or_error(write(STDOUT_FILENO, prefix, 2), b)) < 0) {
         return -1;
     }
-    int b;
-    if ((b = print_uint((size_t)p, 16)) < 0) {
+    if ((b = add_or_error(print_uint((size_t)p, 16), b)) < 0) {
         return -1;
     }
-    return m + b;
+    return b;
 }
 
 int print_double(double n) {
-    int m = 0;
+    char c;
+    int b = 0;
     if (signbit(n)) {
         n = -n;
-        char c = '-';
-        if (write(STDOUT_FILENO, &c, 1) < 0) {
+        c = '-';
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
-        m += 1;
     }
     if (isnan(n)) {
         char nan[] = "nan";
-        if (write(STDOUT_FILENO, nan, 3) < 0) {
+        if ((b = add_or_error(write(STDOUT_FILENO, nan, 3), b)) < 0) {
             return -1;
         }
-        return m + 3;
+        return b;
     }
     if (isinf(n)) {
         char inf[] = "inf";
-        if (write(STDOUT_FILENO, inf, 3) < 0) {
+        if ((b = add_or_error(write(STDOUT_FILENO, inf, 3), b)) < 0) {
             return -1;
         }
-        return m + 3;
+        return b;
     }
-    int b;
-    if ((b = print_uint((unsigned int)n, 10)) < 0) {
+    if ((b = add_or_error(print_uint((unsigned int)n, 10), b)) < 0) {
         return -1;
     }
-    m += b;
-    char c = '.';
-    if (write(STDOUT_FILENO, &c, 1) < 0) {
+    c = '.';
+    if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
         return -1;
     }
     int d = (n - (int)n) * 10;
     for (int i = 0; i < 6; i++) {
         c = d % 10 + '0';
-        if (write(STDOUT_FILENO, &c, 1) < 0) {
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
         d *= 10;
     }
-    return m + 7;
+    return b;
 }
 
 int arg_parse(const char* restrict* fmt, va_list* args) {
@@ -156,30 +163,25 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
 int r_printf(const char* restrict fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    int i = 0, n = 0;
+    int i = 0, b = 0;
     while (fmt[i] != '\0') {
         if (fmt[i] == '%') {
             // arg parse
-            if (write(STDOUT_FILENO, fmt, i) == -1) {
+            if ((b = add_or_error(write(STDOUT_FILENO, fmt, i), b)) < 0) {
                 return -1;
             }
-            n += i;
             fmt += i;
-            int m;
-            if ((m = arg_parse(&fmt, &args)) < 0) {
+            if ((b = add_or_error(arg_parse(&fmt, &args), b)) < 0) {
                 return -1;
-            } else {
-                n += m;
             }
             i = 0;
         } else {
             i++;
         }
     }
-    if (write(STDOUT_FILENO, fmt, i) < 0) {
+    if ((b = add_or_error(write(STDOUT_FILENO, fmt, i), b)) < 0) {
         return -1;
     }
-    n += i;
     va_end(args);
-    return n;
+    return b;
 }
