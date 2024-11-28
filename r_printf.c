@@ -2,19 +2,39 @@
 #include <string.h>
 #include <unistd.h>
 
-int print_int(int n) {
-    char c = (n % 10) + '0';
-    int m = 0;
+char digit_to_char(unsigned int d) {
+    if (d < 10) {
+        return d + '0';
+    } else {
+        return d + 'a';
+    }
+}
+
+int print_int(int n, unsigned int b) {
+    char c = digit_to_char(n % b);
+    int m;
     if (n < 0) {
         n = -n;
         c = '-';
         if (write(STDOUT_FILENO, &c, 1) < 0) {
             return -1;
         }
-        m = print_int(n);
+        m = print_int(n, b);
         return 1 + m;
     } else if (n > 9) {
-        m = print_int(n / 10);
+        m = print_int(n / 10, 10);
+    }
+    if (write(STDOUT_FILENO, &c, 1) < 0) {
+        return -1;
+    }
+    return 1 + m;
+}
+
+int print_uint(unsigned int n, unsigned int b) {
+    char c = digit_to_char(n % b);
+    int m;
+    if (n > 9) {
+        m = print_uint(n / 10, 10);
     }
     if (write(STDOUT_FILENO, &c, 1) < 0) {
         return -1;
@@ -23,7 +43,7 @@ int print_int(int n) {
 }
 
 int print_double(double n) {
-    int m = print_int((int)n);
+    int m = print_int((int)n, 10);
     if (n < 0) {
         n = -n;
     }
@@ -50,7 +70,11 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
     } else if ((*fmt)[1] == 'd' || (*fmt)[1] == 'i') {
         int i = va_arg(*args, int);
         *fmt += 2;
-        return print_int(i);
+        return print_int(i, 10);
+    } else if ((*fmt)[1] == 'u') {
+        unsigned int i = va_arg(*args, unsigned int);
+        *fmt += 2;
+        return print_uint(i, 10);
     } else if ((*fmt)[1] == 'f') {
         double d = va_arg(*args, double);
         *fmt += 2;
