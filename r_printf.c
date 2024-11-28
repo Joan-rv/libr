@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
@@ -43,10 +44,23 @@ int print_uint(unsigned int n, unsigned int b) {
 }
 
 int print_double(double n) {
-    int m = print_int((int)n, 10);
-    if (n < 0) {
+    int m = 0;
+    if (signbit(n)) {
         n = -n;
+        char c = '-';
+        if (write(STDOUT_FILENO, &c, 1) < 0) {
+            return -1;
+        }
     }
+    if (isnan(n)) {
+        char nan[] = "nan";
+        return write(STDOUT_FILENO, nan, 3);
+    }
+    if (isinf(n)) {
+        char inf[] = "inf";
+        return write(STDOUT_FILENO, inf, 3);
+    }
+    m += print_uint((unsigned int)n, 10);
     char c = '.';
     if (write(STDOUT_FILENO, &c, 1) < 0) {
         return -1;
