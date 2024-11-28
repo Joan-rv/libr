@@ -20,10 +20,14 @@ int print_int(int n, unsigned int b) {
         if (write(STDOUT_FILENO, &c, 1) < 0) {
             return -1;
         }
-        m = print_int(n, b);
+        if ((m = print_int(n, b)) < 0) {
+            return -1;
+        }
         return 1 + m;
     } else if (n > 9) {
-        m = print_int(n / 10, 10);
+        if ((m = print_int(n / b, b)) < 0) {
+            return -1;
+        }
     }
     if (write(STDOUT_FILENO, &c, 1) < 0) {
         return -1;
@@ -35,7 +39,9 @@ int print_uint(unsigned int n, unsigned int b) {
     char c = digit_to_char(n % b);
     int m = 0;
     if (n > b) {
-        m = print_uint(n / b, b);
+        if ((m = print_uint(n / b, b)) < 0) {
+            return -1;
+        }
     }
     if (write(STDOUT_FILENO, &c, 1) < 0) {
         return -1;
@@ -72,13 +78,23 @@ int print_double(double n) {
     }
     if (isnan(n)) {
         char nan[] = "nan";
-        return m + write(STDOUT_FILENO, nan, 3);
+        if (write(STDOUT_FILENO, nan, 3) < 0) {
+            return -1;
+        }
+        return m + 3;
     }
     if (isinf(n)) {
         char inf[] = "inf";
-        return m + write(STDOUT_FILENO, inf, 3);
+        if (write(STDOUT_FILENO, inf, 3) < 0) {
+            return -1;
+        }
+        return m + 3;
     }
-    m += print_uint((unsigned int)n, 10);
+    int b;
+    if ((b = print_uint((unsigned int)n, 10)) < 0) {
+        return -1;
+    }
+    m += b;
     char c = '.';
     if (write(STDOUT_FILENO, &c, 1) < 0) {
         return -1;
