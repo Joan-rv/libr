@@ -43,6 +43,23 @@ int print_uint(unsigned int n, unsigned int b) {
     return 1 + m;
 }
 
+int print_pointer(void* p) {
+    if (p == NULL) {
+        char nil[] = "(nil)";
+        return write(STDOUT_FILENO, nil, 5);
+    }
+    char prefix[] = "0x";
+    int m;
+    if ((m = write(STDOUT_FILENO, prefix, 2)) < 0) {
+        return -1;
+    }
+    int b;
+    if ((b = print_uint((size_t)p, 16)) < 0) {
+        return -1;
+    }
+    return m + b;
+}
+
 int print_double(double n) {
     int m = 0;
     if (signbit(n)) {
@@ -97,6 +114,10 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
         int i = va_arg(*args, int);
         *fmt += 2;
         return print_uint(i, 16);
+    } else if ((*fmt)[1] == 'p') {
+        void* p = va_arg(*args, void*);
+        *fmt += 2;
+        return print_pointer(p);
     } else if ((*fmt)[1] == 'f') {
         double d = va_arg(*args, double);
         *fmt += 2;
