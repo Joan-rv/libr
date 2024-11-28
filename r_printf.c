@@ -68,14 +68,15 @@ int print_double(double n) {
         if (write(STDOUT_FILENO, &c, 1) < 0) {
             return -1;
         }
+        m += 1;
     }
     if (isnan(n)) {
         char nan[] = "nan";
-        return write(STDOUT_FILENO, nan, 3);
+        return m + write(STDOUT_FILENO, nan, 3);
     }
     if (isinf(n)) {
         char inf[] = "inf";
-        return write(STDOUT_FILENO, inf, 3);
+        return m + write(STDOUT_FILENO, inf, 3);
     }
     m += print_uint((unsigned int)n, 10);
     char c = '.';
