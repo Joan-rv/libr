@@ -6,7 +6,7 @@ char digit_to_char(unsigned int d) {
     if (d < 10) {
         return d + '0';
     } else {
-        return d + 'a';
+        return d - 10 + 'a';
     }
 }
 
@@ -33,8 +33,8 @@ int print_int(int n, unsigned int b) {
 int print_uint(unsigned int n, unsigned int b) {
     char c = digit_to_char(n % b);
     int m = 0;
-    if (n > 9) {
-        m = print_uint(n / 10, 10);
+    if (n > b) {
+        m = print_uint(n / b, b);
     }
     if (write(STDOUT_FILENO, &c, 1) < 0) {
         return -1;
@@ -75,6 +75,14 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
         unsigned int i = va_arg(*args, unsigned int);
         *fmt += 2;
         return print_uint(i, 10);
+    } else if ((*fmt)[1] == 'o') {
+        int i = va_arg(*args, int);
+        *fmt += 2;
+        return print_uint(i, 8);
+    } else if ((*fmt)[1] == 'x') {
+        int i = va_arg(*args, int);
+        *fmt += 2;
+        return print_uint(i, 16);
     } else if ((*fmt)[1] == 'f') {
         double d = va_arg(*args, double);
         *fmt += 2;
