@@ -12,7 +12,7 @@ char digit_to_char(unsigned int d) {
 
 int print_int(int n, unsigned int b) {
     char c = digit_to_char(n % b);
-    int m;
+    int m = 0;
     if (n < 0) {
         n = -n;
         c = '-';
@@ -32,7 +32,7 @@ int print_int(int n, unsigned int b) {
 
 int print_uint(unsigned int n, unsigned int b) {
     char c = digit_to_char(n % b);
-    int m;
+    int m = 0;
     if (n > 9) {
         m = print_uint(n / 10, 10);
     }
