@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 int main() {
-    char* fmt = "Hi %c, %d, %u, %o, %x, %p, %p, 50%%, %f, %f, %f, %s,\n";
+    char* fmt = "Hi %c, %d, %u, %o, %X, %p, %p, 50%%, %f, %F, %f, %s,\n";
     int r1 = r_printf(fmt, 'a', -222, -1, 15, 15, fmt, NULL, -2.2f, -INFINITY,
                       -NAN, "hello");
     int r2 = printf(fmt, 'a', -222, -1, 15, 15, fmt, NULL, -2.2f, -INFINITY,
