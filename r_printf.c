@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <math.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -82,16 +83,7 @@ int print_pointer(void* p) {
     return b;
 }
 
-int print_decimal(double n, int flags) {
-    char c;
-    int b = 0;
-    if (signbit(n)) {
-        n = -n;
-        c = '-';
-        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-            return -1;
-        }
-    }
+bool handle_nan_or_inf(double n, int flags, int* b) {
     if (isnan(n)) {
         char nan[3];
         if (flags & F_UPPERCASE) {
@@ -103,12 +95,11 @@ int print_decimal(double n, int flags) {
             nan[1] = 'a';
             nan[2] = 'n';
         }
-        if ((b = add_or_error(write(STDOUT_FILENO, nan, 3), b)) < 0) {
-            return -1;
+        if ((*b = add_or_error(write(STDOUT_FILENO, nan, 3), *b)) < 0) {
+            *b = -1;
         }
-        return b;
-    }
-    if (isinf(n)) {
+        return true;
+    } else if (isinf(n)) {
         char inf[3];
         if (flags & F_UPPERCASE) {
             inf[0] = 'I';
@@ -119,9 +110,26 @@ int print_decimal(double n, int flags) {
             inf[1] = 'n';
             inf[2] = 'f';
         }
-        if ((b = add_or_error(write(STDOUT_FILENO, inf, 3), b)) < 0) {
+        if ((*b = add_or_error(write(STDOUT_FILENO, inf, 3), *b)) < 0) {
+            *b = -1;
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+int print_decimal(double n, int flags) {
+    char c;
+    int b = 0;
+    if (signbit(n)) {
+        n = -n;
+        c = '-';
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
+    }
+    if (handle_nan_or_inf(n, flags, &b)) {
         return b;
     }
     if ((b = add_or_error(print_unsigned((unsigned int)n, 10, flags), b)) < 0) {
@@ -153,36 +161,7 @@ int print_exponential(double n, int flags) {
             return -1;
         }
     }
-    if (isnan(n)) {
-        char nan[3];
-        if (flags & F_UPPERCASE) {
-            nan[0] = 'N';
-            nan[1] = 'A';
-            nan[2] = 'N';
-        } else {
-            nan[0] = 'n';
-            nan[1] = 'a';
-            nan[2] = 'n';
-        }
-        if ((b = add_or_error(write(STDOUT_FILENO, nan, 3), b)) < 0) {
-            return -1;
-        }
-        return b;
-    }
-    if (isinf(n)) {
-        char inf[3];
-        if (flags & F_UPPERCASE) {
-            inf[0] = 'I';
-            inf[1] = 'N';
-            inf[2] = 'F';
-        } else {
-            inf[0] = 'i';
-            inf[1] = 'n';
-            inf[2] = 'f';
-        }
-        if ((b = add_or_error(write(STDOUT_FILENO, inf, 3), b)) < 0) {
-            return -1;
-        }
+    if (handle_nan_or_inf(n, flags, &b)) {
         return b;
     }
     int e = 6, m;
