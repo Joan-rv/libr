@@ -131,9 +131,10 @@ int print_decimal(double n, int flags) {
     if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
         return -1;
     }
-    int d = (n - (int)n) * 10;
+    // add 0.0000005 to round (6 zeros after decimal point)
+    double d = (n + 0.0000005f - (int)n) * 10;
     for (int i = 0; i < 6; i++) {
-        c = d % 10 + '0';
+        c = (int)d % 10 + '0';
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
@@ -201,6 +202,8 @@ int print_exponential(double n, int flags) {
             m = g;
             e++;
         }
+        // round m
+        m = ((int)(g * 10) + 5) / 10;
     }
     c = digit_to_char((m / 1000000) % 10, flags);
     if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
