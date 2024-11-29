@@ -82,7 +82,7 @@ int print_pointer(void* p) {
     return b;
 }
 
-int print_double(double n, int flags) {
+int print_decimal(double n, int flags) {
     char c;
     int b = 0;
     if (signbit(n)) {
@@ -142,6 +142,112 @@ int print_double(double n, int flags) {
     return b;
 }
 
+int print_exponential(double n, int flags) {
+    char c;
+    int b = 0;
+    if (signbit(n)) {
+        n = -n;
+        c = '-';
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+            return -1;
+        }
+    }
+    if (isnan(n)) {
+        char nan[3];
+        if (flags & F_UPPERCASE) {
+            nan[0] = 'N';
+            nan[1] = 'A';
+            nan[2] = 'N';
+        } else {
+            nan[0] = 'n';
+            nan[1] = 'a';
+            nan[2] = 'n';
+        }
+        if ((b = add_or_error(write(STDOUT_FILENO, nan, 3), b)) < 0) {
+            return -1;
+        }
+        return b;
+    }
+    if (isinf(n)) {
+        char inf[3];
+        if (flags & F_UPPERCASE) {
+            inf[0] = 'I';
+            inf[1] = 'N';
+            inf[2] = 'F';
+        } else {
+            inf[0] = 'i';
+            inf[1] = 'n';
+            inf[2] = 'f';
+        }
+        if ((b = add_or_error(write(STDOUT_FILENO, inf, 3), b)) < 0) {
+            return -1;
+        }
+        return b;
+    }
+    int e = 6, m;
+    if (n == 0) {
+        m = 0;
+        e = 0;
+    } else {
+        double g = n;
+        m = n;
+        while (m < 1000000) {
+            g *= 10;
+            m = g;
+            e--;
+        }
+        while (m > 9999999) {
+            g /= 10;
+            m = g;
+            e++;
+        }
+    }
+    c = digit_to_char((m / 1000000) % 10, flags);
+    if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+        return -1;
+    }
+    c = '.';
+    if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+        return -1;
+    }
+    for (int p = 100000; p > 0; p /= 10) {
+        c = digit_to_char((m / p) % 10, flags);
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+            return -1;
+        }
+    }
+    if (flags & F_UPPERCASE) {
+        c = 'E';
+    } else {
+        c = 'e';
+    }
+    if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+        return -1;
+    }
+
+    if (e > 9) {
+        print_signed(e, 10, 0);
+    } else {
+        if (e < 0) {
+            c = '-';
+            e = -e;
+        } else {
+            c = '+';
+        }
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+            return -1;
+        }
+        for (int p = 10; p > 0; p /= 10) {
+            c = digit_to_char((e / p) % 10, 0);
+            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+                return -1;
+            }
+        }
+    }
+
+    return b;
+}
+
 int arg_parse(const char* restrict* fmt, va_list* args) {
     int flags = 0;
     if ((*fmt)[1] == 'c') {
@@ -176,12 +282,21 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
     } else if ((*fmt)[1] == 'f') {
         double d = va_arg(*args, double);
         *fmt += 2;
-        return print_double(d, flags);
+        return print_decimal(d, flags);
     } else if ((*fmt)[1] == 'F') {
         double d = va_arg(*args, double);
         flags |= F_UPPERCASE;
         *fmt += 2;
-        return print_double(d, flags);
+        return print_decimal(d, flags);
+    } else if ((*fmt)[1] == 'e') {
+        double d = va_arg(*args, double);
+        *fmt += 2;
+        return print_exponential(d, flags);
+    } else if ((*fmt)[1] == 'E') {
+        double d = va_arg(*args, double);
+        flags |= F_UPPERCASE;
+        *fmt += 2;
+        return print_exponential(d, flags);
     } else if ((*fmt)[1] == 's') {
         char* s = va_arg(*args, char*);
         *fmt += 2;
