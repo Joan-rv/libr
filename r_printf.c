@@ -28,7 +28,7 @@ char digit_to_char(unsigned int d, int flags) {
     }
 }
 
-int print_int(int n, int base, int flags) {
+int print_signed(long long n, int base, int flags) {
     char c = digit_to_char(n % base, flags);
     int b = 0;
     if (n < 0) {
@@ -37,12 +37,12 @@ int print_int(int n, int base, int flags) {
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
-        if ((b = add_or_error(print_int(n, base, flags), b)) < 0) {
+        if ((b = add_or_error(print_signed(n, base, flags), b)) < 0) {
             return -1;
         }
         return b;
     } else if (n >= base) {
-        if ((b = add_or_error(print_int(n / base, base, flags), b)) < 0) {
+        if ((b = add_or_error(print_signed(n / base, base, flags), b)) < 0) {
             return -1;
         }
     }
@@ -52,11 +52,11 @@ int print_int(int n, int base, int flags) {
     return b;
 }
 
-int print_uint(unsigned int n, unsigned int base, int flags) {
+int print_unsigned(unsigned long long n, unsigned int base, int flags) {
     char c = digit_to_char(n % base, flags);
     int b = 0;
     if (n >= base) {
-        if ((b = print_uint(n / base, base, flags)) < 0) {
+        if ((b = print_unsigned(n / base, base, flags)) < 0) {
             return -1;
         }
     }
@@ -76,7 +76,7 @@ int print_pointer(void* p) {
     if ((b = add_or_error(write(STDOUT_FILENO, prefix, 2), b)) < 0) {
         return -1;
     }
-    if ((b = add_or_error(print_uint((size_t)p, 16, 0), b)) < 0) {
+    if ((b = add_or_error(print_unsigned((size_t)p, 16, 0), b)) < 0) {
         return -1;
     }
     return b;
@@ -124,7 +124,7 @@ int print_double(double n, int flags) {
         }
         return b;
     }
-    if ((b = add_or_error(print_uint((unsigned int)n, 10, flags), b)) < 0) {
+    if ((b = add_or_error(print_unsigned((unsigned int)n, 10, flags), b)) < 0) {
         return -1;
     }
     c = '.';
@@ -151,24 +151,24 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
     } else if ((*fmt)[1] == 'd' || (*fmt)[1] == 'i') {
         int i = va_arg(*args, int);
         *fmt += 2;
-        return print_int(i, 10, flags);
+        return print_signed(i, 10, flags);
     } else if ((*fmt)[1] == 'u') {
         unsigned int i = va_arg(*args, unsigned int);
         *fmt += 2;
-        return print_uint(i, 10, flags);
+        return print_unsigned(i, 10, flags);
     } else if ((*fmt)[1] == 'o') {
         int i = va_arg(*args, int);
         *fmt += 2;
-        return print_uint(i, 8, flags);
+        return print_unsigned(i, 8, flags);
     } else if ((*fmt)[1] == 'x') {
         int i = va_arg(*args, int);
         *fmt += 2;
-        return print_uint(i, 16, flags);
+        return print_unsigned(i, 16, flags);
     } else if ((*fmt)[1] == 'X') {
         int i = va_arg(*args, int);
         flags |= F_UPPERCASE;
         *fmt += 2;
-        return print_uint(i, 16, flags);
+        return print_unsigned(i, 16, flags);
     } else if ((*fmt)[1] == 'p') {
         void* p = va_arg(*args, void*);
         *fmt += 2;
