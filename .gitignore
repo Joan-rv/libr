@@ -2,3 +2,4 @@
 *.a
 *.so
 test
+compile_commands.json
