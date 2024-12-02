@@ -7,6 +7,7 @@
 
 #define F_UPPERCASE (1 << 0)
 #define F_SIGNALWAYS (1 << 1)
+#define F_SPACE (1 << 2)
 
 int add_or_error(ssize_t r, int b) {
     if (r < 0) {
@@ -53,8 +54,12 @@ int print_signed(long long n, int base, int flags) {
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
-    } else if (flags & F_SIGNALWAYS) {
-        c = '+';
+    } else if (flags & (F_SIGNALWAYS | F_SPACE)) {
+        if (flags & F_SIGNALWAYS) {
+            c = '+';
+        } else {
+            c = ' ';
+        }
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
@@ -127,8 +132,12 @@ int print_decimal(double n, int flags) {
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
-    } else if (flags & F_SIGNALWAYS) {
-        c = '+';
+    } else if (flags & (F_SIGNALWAYS | F_SPACE)) {
+        if (flags & F_SIGNALWAYS) {
+            c = '+';
+        } else {
+            c = ' ';
+        }
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
@@ -164,8 +173,12 @@ int print_exponential(double n, int flags) {
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
-    } else if (flags & F_SIGNALWAYS) {
-        c = '+';
+    } else if (flags & (F_SIGNALWAYS | F_SPACE)) {
+        if (flags & F_SIGNALWAYS) {
+            c = '+';
+        } else {
+            c = ' ';
+        }
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
@@ -241,6 +254,10 @@ int print_exponential(double n, int flags) {
 
 int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     switch ((*fmt)[1]) {
+    case ' ':
+        flags |= F_SPACE;
+        *fmt += 1;
+        return arg_parse(fmt, args, flags);
     case '+':
         flags |= F_SIGNALWAYS;
         *fmt += 1;
