@@ -8,6 +8,7 @@
 #define F_UPPERCASE (1 << 0)
 #define F_SIGNALWAYS (1 << 1)
 #define F_SPACE (1 << 2)
+#define F_ALTERNATE (1 << 3)
 
 int add_or_error(ssize_t r, int b) {
     if (r < 0) {
@@ -32,10 +33,32 @@ char digit_to_char(unsigned int d, int flags) {
 }
 
 int print_unsigned(unsigned long long n, unsigned int base, int flags) {
-    char c = digit_to_char(n % base, flags);
+    char c;
     int b = 0;
+    if ((base == 8 || base == 16) && flags & F_ALTERNATE) {
+        if (base == 8) {
+            c = '0';
+            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+                return -1;
+            }
+        } else if (base == 16) {
+            char s[2];
+            if (flags & F_UPPERCASE) {
+                memcpy(s, "0X", 2);
+            } else {
+                memcpy(s, "0x", 2);
+            }
+
+            if ((b = add_or_error(write(STDOUT_FILENO, s, 2), b)) < 0) {
+                return -1;
+            }
+        }
+    }
+    c = digit_to_char(n % base, flags);
     if (n >= base) {
-        if ((b = print_unsigned(n / base, base, flags)) < 0) {
+        if ((b = add_or_error(
+                 print_unsigned(n / base, base, flags & ~F_ALTERNATE), b)) <
+            0) {
             return -1;
         }
     }
@@ -260,6 +283,11 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
         return arg_parse(fmt, args, flags);
     case '+':
         flags |= F_SIGNALWAYS;
+        *fmt += 1;
+        return arg_parse(fmt, args, flags);
+    case '#':
+        // TODO: handle floating point alternate formats
+        flags |= F_ALTERNATE;
         *fmt += 1;
         return arg_parse(fmt, args, flags);
     case 'c': {
