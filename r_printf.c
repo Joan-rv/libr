@@ -327,6 +327,12 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
         int n = strlen(s);
         return write(STDOUT_FILENO, s, n);
     }
+    case 'm': {
+        char* s = strerror(errno);
+        int n = strlen(s);
+        *fmt += 2;
+        return write(STDOUT_FILENO, s, n);
+    }
     case '%': {
         *fmt += 2;
         return write(STDOUT_FILENO, *fmt - 2, 1);
