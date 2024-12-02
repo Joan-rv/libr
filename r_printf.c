@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #define F_UPPERCASE (1 << 0)
+#define F_SIGNALWAYS (1 << 1)
 
 int add_or_error(ssize_t r, int b) {
     if (r < 0) {
@@ -29,30 +30,6 @@ char digit_to_char(unsigned int d, int flags) {
     }
 }
 
-int print_signed(long long n, int base, int flags) {
-    char c = digit_to_char(n % base, flags);
-    int b = 0;
-    if (n < 0) {
-        n = -n;
-        c = '-';
-        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-            return -1;
-        }
-        if ((b = add_or_error(print_signed(n, base, flags), b)) < 0) {
-            return -1;
-        }
-        return b;
-    } else if (n >= base) {
-        if ((b = add_or_error(print_signed(n / base, base, flags), b)) < 0) {
-            return -1;
-        }
-    }
-    if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-        return -1;
-    }
-    return b;
-}
-
 int print_unsigned(unsigned long long n, unsigned int base, int flags) {
     char c = digit_to_char(n % base, flags);
     int b = 0;
@@ -62,6 +39,28 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags) {
         }
     }
     if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+        return -1;
+    }
+    return b;
+}
+
+int print_signed(long long n, int base, int flags) {
+    char c;
+    int b = 0;
+    if (n < 0) {
+        n = -n;
+        c = '-';
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+            return -1;
+        }
+    } else if (flags & F_SIGNALWAYS) {
+        c = '+';
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+            return -1;
+        }
+    }
+    if ((b = add_or_error(print_unsigned(n, base, flags & ~F_SIGNALWAYS), b)) <
+        0) {
         return -1;
     }
     return b;
@@ -128,6 +127,11 @@ int print_decimal(double n, int flags) {
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
+    } else if (flags & F_SIGNALWAYS) {
+        c = '+';
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+            return -1;
+        }
     }
     if (handle_nan_or_inf(n, flags, &b)) {
         return b;
@@ -157,6 +161,11 @@ int print_exponential(double n, int flags) {
     if (signbit(n)) {
         n = -n;
         c = '-';
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+            return -1;
+        }
+    } else if (flags & F_SIGNALWAYS) {
+        c = '+';
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
@@ -230,9 +239,12 @@ int print_exponential(double n, int flags) {
     return b;
 }
 
-int arg_parse(const char* restrict* fmt, va_list* args) {
-    int flags = 0;
+int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     switch ((*fmt)[1]) {
+    case '+':
+        flags |= F_SIGNALWAYS;
+        *fmt += 1;
+        return arg_parse(fmt, args, flags);
     case 'c': {
         char c = va_arg(*args, int);
         *fmt += 2;
@@ -319,7 +331,7 @@ int r_printf(const char* restrict fmt, ...) {
                 return -1;
             }
             fmt += i;
-            if ((b = add_or_error(arg_parse(&fmt, &args), b)) < 0) {
+            if ((b = add_or_error(arg_parse(&fmt, &args, 0), b)) < 0) {
                 return -1;
             }
             i = 0;
