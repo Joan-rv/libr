@@ -114,13 +114,9 @@ bool handle_nan_or_inf(double n, int flags, int* b) {
     if (isnan(n)) {
         char nan[3];
         if (flags & F_UPPERCASE) {
-            nan[0] = 'N';
-            nan[1] = 'A';
-            nan[2] = 'N';
+            memcpy(nan, "NAN", 3);
         } else {
-            nan[0] = 'n';
-            nan[1] = 'a';
-            nan[2] = 'n';
+            memcpy(nan, "nan", 3);
         }
         if ((*b = add_or_error(write(STDOUT_FILENO, nan, 3), *b)) < 0) {
             *b = -1;
@@ -129,13 +125,9 @@ bool handle_nan_or_inf(double n, int flags, int* b) {
     } else if (isinf(n)) {
         char inf[3];
         if (flags & F_UPPERCASE) {
-            inf[0] = 'I';
-            inf[1] = 'N';
-            inf[2] = 'F';
+            memcpy(inf, "INF", 3);
         } else {
-            inf[0] = 'i';
-            inf[1] = 'n';
-            inf[2] = 'f';
+            memcpy(inf, "inf", 3);
         }
         if ((*b = add_or_error(write(STDOUT_FILENO, inf, 3), *b)) < 0) {
             *b = -1;
