@@ -250,17 +250,17 @@ int arg_parse(const char* restrict* fmt, va_list* args) {
         return print_unsigned(i, 10, flags);
     }
     case 'o': {
-        int i = va_arg(*args, int);
+        unsigned int i = va_arg(*args, int);
         *fmt += 2;
         return print_unsigned(i, 8, flags);
     }
     case 'x': {
-        int i = va_arg(*args, int);
+        unsigned int i = va_arg(*args, int);
         *fmt += 2;
         return print_unsigned(i, 16, flags);
     }
     case 'X': {
-        int i = va_arg(*args, int);
+        unsigned int i = va_arg(*args, int);
         flags |= F_UPPERCASE;
         *fmt += 2;
         return print_unsigned(i, 16, flags);
