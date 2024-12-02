@@ -4,7 +4,7 @@ AR=ar
 RM=rm -f
 OBJ=r_printf.o r_gcd.o
 
-.PHONY: clean
+.PHONY: clean all
 
 all: test lib
 
@@ -23,4 +23,4 @@ libr.so: $(OBJ)
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
-	$(RM) *.o *.so
+	$(RM) *.o *.a *.so test
