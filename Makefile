@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -Werror -g -I.
+CFLAGS=-fPIC -Wall -Wextra -Werror -g -I.
 AR=ar
 RM=rm -f
 OBJ=r_printf.o r_gcd.o
