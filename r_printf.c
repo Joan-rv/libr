@@ -232,63 +232,79 @@ int print_exponential(double n, int flags) {
 
 int arg_parse(const char* restrict* fmt, va_list* args) {
     int flags = 0;
-    if ((*fmt)[1] == 'c') {
+    switch ((*fmt)[1]) {
+    case 'c': {
         char c = va_arg(*args, int);
         *fmt += 2;
         return write(STDOUT_FILENO, &c, 1);
-    } else if ((*fmt)[1] == 'd' || (*fmt)[1] == 'i') {
+    }
+    case 'd':
+    case 'i': {
         int i = va_arg(*args, int);
         *fmt += 2;
         return print_signed(i, 10, flags);
-    } else if ((*fmt)[1] == 'u') {
+    }
+    case 'u': {
         unsigned int i = va_arg(*args, unsigned int);
         *fmt += 2;
         return print_unsigned(i, 10, flags);
-    } else if ((*fmt)[1] == 'o') {
+    }
+    case 'o': {
         int i = va_arg(*args, int);
         *fmt += 2;
         return print_unsigned(i, 8, flags);
-    } else if ((*fmt)[1] == 'x') {
+    }
+    case 'x': {
         int i = va_arg(*args, int);
         *fmt += 2;
         return print_unsigned(i, 16, flags);
-    } else if ((*fmt)[1] == 'X') {
+    }
+    case 'X': {
         int i = va_arg(*args, int);
         flags |= F_UPPERCASE;
         *fmt += 2;
         return print_unsigned(i, 16, flags);
-    } else if ((*fmt)[1] == 'p') {
+    }
+    case 'p': {
         void* p = va_arg(*args, void*);
         *fmt += 2;
         return print_pointer(p);
-    } else if ((*fmt)[1] == 'f') {
+    }
+    case 'f': {
         double d = va_arg(*args, double);
         *fmt += 2;
         return print_decimal(d, flags);
-    } else if ((*fmt)[1] == 'F') {
+    }
+    case 'F': {
         double d = va_arg(*args, double);
         flags |= F_UPPERCASE;
         *fmt += 2;
         return print_decimal(d, flags);
-    } else if ((*fmt)[1] == 'e') {
+    }
+    case 'e': {
         double d = va_arg(*args, double);
         *fmt += 2;
         return print_exponential(d, flags);
-    } else if ((*fmt)[1] == 'E') {
+    }
+    case 'E': {
         double d = va_arg(*args, double);
         flags |= F_UPPERCASE;
         *fmt += 2;
         return print_exponential(d, flags);
-    } else if ((*fmt)[1] == 's') {
+    }
+    case 's': {
         char* s = va_arg(*args, char*);
         *fmt += 2;
         int n = strlen(s);
         return write(STDOUT_FILENO, s, n);
-    } else if ((*fmt)[1] == '%') {
+    }
+    case '%': {
         *fmt += 2;
         return write(STDOUT_FILENO, *fmt - 2, 1);
-    } else {
+    }
+    default: {
         return -1;
+    }
     }
 }
 
