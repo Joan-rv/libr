@@ -268,6 +268,7 @@ int print_exponential(double n, int flags) {
 }
 
 int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
+    // read flags
     switch ((*fmt)[1]) {
     case ' ':
         flags |= F_SPACE;
@@ -282,6 +283,27 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
         flags |= F_ALTERNATE;
         *fmt += 1;
         return arg_parse(fmt, args, flags);
+    }
+
+    // read width
+    int width = 0;
+    while ('0' <= (*fmt)[1] && (*fmt)[1] <= '9') {
+        width = width * 10 + (*fmt)[1] - '0';
+        *fmt += 1;
+    }
+
+    // read precision
+    if ((*fmt)[1] == '.') {
+        *fmt += 1;
+        int precision = 0;
+        while ('0' <= (*fmt)[1] && (*fmt)[1] <= '9') {
+            precision = precision * 10 + (*fmt)[1] - '0';
+            *fmt += 1;
+        }
+    }
+
+    // read conversion
+    switch ((*fmt)[1]) {
     case 'c': {
         char c = va_arg(*args, int);
         *fmt += 2;
