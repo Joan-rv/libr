@@ -56,7 +56,7 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
             num_width += 2;
         }
     }
-    num_width += (long long)log10(n) + 1;
+    num_width += (long long)(log2(n) / log2(base)) + 1;
     if (!(flags & F_LEFTADJUST)) {
         if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
             return -1;
@@ -108,7 +108,7 @@ int print_signed(long long n, int base, int flags, int width) {
     if (n < 0 || flags & (F_SIGNALWAYS | F_SPACE)) {
         num_width++;
     }
-    num_width += (long long)log10(n) + 1;
+    num_width += (long long)(log2(n) / log2(base)) + 1;
     if (!(flags & F_LEFTADJUST)) {
         if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
             return -1;
