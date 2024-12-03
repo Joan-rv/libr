@@ -33,6 +33,17 @@ char digit_to_char(unsigned int d, int flags) {
     }
 }
 
+int print_spaces(int n) {
+    char c = ' ';
+    int b = 0;
+    for (int i = 0; i < n; i++) {
+        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+            return -1;
+        }
+    }
+    return b;
+}
+
 int print_unsigned(unsigned long long n, unsigned int base, int flags,
                    int width) {
     char c;
@@ -47,11 +58,8 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
     }
     num_width += (long long)log10(n) + 1;
     if (!(flags & F_LEFTADJUST)) {
-        c = ' ';
-        for (int i = num_width; i < width; i++) {
-            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-                return -1;
-            }
+        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+            return -1;
         }
     }
     if ((base == 8 || base == 16) && flags & F_ALTERNATE) {
@@ -85,11 +93,8 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
         return -1;
     }
     if (flags & F_LEFTADJUST) {
-        c = ' ';
-        for (int i = num_width; i < width; i++) {
-            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-                return -1;
-            }
+        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+            return -1;
         }
     }
     return b;
@@ -105,11 +110,8 @@ int print_signed(long long n, int base, int flags, int width) {
     }
     num_width += (long long)log10(n) + 1;
     if (!(flags & F_LEFTADJUST)) {
-        c = ' ';
-        for (int i = num_width; i < width; i++) {
-            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-                return -1;
-            }
+        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+            return -1;
         }
     }
 
@@ -134,11 +136,8 @@ int print_signed(long long n, int base, int flags, int width) {
         return -1;
     }
     if (flags & F_LEFTADJUST) {
-        c = ' ';
-        for (int i = num_width; i < width; i++) {
-            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-                return -1;
-            }
+        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+            return -1;
         }
     }
     return b;
