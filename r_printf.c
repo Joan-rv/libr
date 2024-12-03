@@ -143,18 +143,34 @@ int print_signed(long long n, int base, int flags, int width) {
     return b;
 }
 
-int print_pointer(void* p) {
+int print_pointer(void* p, int flags, int width) {
+    int num_width = 0;
+    int b = 0;
+    if (p == NULL) {
+        num_width = 5;
+    } else {
+        num_width = 2 + (long long)log2((size_t)p) / 4 + 1;
+    }
+    if (!(flags & F_LEFTADJUST)) {
+        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+            return -1;
+        }
+    }
     if (p == NULL) {
         char nil[] = "(nil)";
-        return write(STDOUT_FILENO, nil, 5);
+        return add_or_error(write(STDOUT_FILENO, nil, 5), b);
     }
     char prefix[] = "0x";
-    int b = 0;
     if ((b = add_or_error(write(STDOUT_FILENO, prefix, 2), b)) < 0) {
         return -1;
     }
     if ((b = add_or_error(print_unsigned((size_t)p, 16, 0, 0), b)) < 0) {
         return -1;
+    }
+    if (flags & F_LEFTADJUST) {
+        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+            return -1;
+        }
     }
     return b;
 }
@@ -393,7 +409,7 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     case 'p': {
         void* p = va_arg(*args, void*);
         *fmt += 2;
-        return print_pointer(p);
+        return print_pointer(p, flags, width);
     }
     case 'f': {
         double d = va_arg(*args, double);

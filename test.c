@@ -3,9 +3,10 @@
 #include <stdio.h>
 
 int main() {
-    char* fmt = "Hi %c, %-10d, %+d, % d, %+20u, %#10o, %#X, %p, %p, 50%%, %+f, "
-                "%+E, %F, %f, "
-                "%s, %m\n";
+    char* fmt =
+        "Hi %c, %-10d, %+d, % d, %+20u, %#10o, %#X, %10p, %10p, 50%%, %+f, "
+        "%+E, %F, %f, "
+        "%s, %m\n";
     int r1 = r_printf(fmt, 'a', 222, 222, 222, -1, 15, 15, fmt, NULL, 22.2f,
                       0.02f, -INFINITY, -NAN, "hello");
     int r2 = printf(fmt, 'a', 222, 222, 222, -1, 15, 15, fmt, NULL, 22.2f,
