@@ -38,6 +38,13 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
     char c;
     int b = 0;
     int num_width = 0;
+    if (flags & F_ALTERNATE) {
+        if (base == 8) {
+            num_width++;
+        } else if (base == 16) {
+            num_width += 2;
+        }
+    }
     num_width += (long long)log10(n) + 1;
     if (!(flags & F_LEFTADJUST)) {
         c = ' ';
