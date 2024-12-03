@@ -9,6 +9,7 @@
 #define F_SIGNALWAYS (1 << 1)
 #define F_SPACE (1 << 2)
 #define F_ALTERNATE (1 << 3)
+#define F_LEFTADJUST (1 << 4)
 
 int add_or_error(ssize_t r, int b) {
     if (r < 0) {
@@ -68,9 +69,24 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags) {
     return b;
 }
 
-int print_signed(long long n, int base, int flags) {
+int print_signed(long long n, int base, int flags, int width) {
     char c;
     int b = 0;
+
+    int num_width = 0;
+    if (n < 0 || flags & (F_SIGNALWAYS | F_SPACE)) {
+        num_width++;
+    }
+    num_width += (long long)log10(n) + 1;
+    if (!(flags & F_LEFTADJUST)) {
+        c = ' ';
+        for (int i = num_width; i < width; i++) {
+            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+                return -1;
+            }
+        }
+    }
+
     if (n < 0) {
         n = -n;
         c = '-';
@@ -90,6 +106,14 @@ int print_signed(long long n, int base, int flags) {
     if ((b = add_or_error(print_unsigned(n, base, flags & ~F_SIGNALWAYS), b)) <
         0) {
         return -1;
+    }
+    if ((flags & F_LEFTADJUST)) {
+        c = ' ';
+        for (int i = num_width; i < width; i++) {
+            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+                return -1;
+            }
+        }
     }
     return b;
 }
@@ -245,7 +269,7 @@ int print_exponential(double n, int flags) {
     }
 
     if (e > 9) {
-        print_signed(e, 10, 0);
+        print_signed(e, 10, 0, 0);
     } else {
         if (e < 0) {
             c = '-';
@@ -276,6 +300,10 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
         return arg_parse(fmt, args, flags);
     case '+':
         flags |= F_SIGNALWAYS;
+        *fmt += 1;
+        return arg_parse(fmt, args, flags);
+    case '-':
+        flags |= F_LEFTADJUST;
         *fmt += 1;
         return arg_parse(fmt, args, flags);
     case '#':
@@ -313,7 +341,7 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     case 'i': {
         int i = va_arg(*args, int);
         *fmt += 2;
-        return print_signed(i, 10, flags);
+        return print_signed(i, 10, flags, width);
     }
     case 'u': {
         unsigned int i = va_arg(*args, unsigned int);

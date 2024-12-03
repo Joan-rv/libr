@@ -9,7 +9,7 @@ OBJ=r_printf.o r_gcd.o
 all: test lib
 
 test: test.o libr.a
-	$(CC) $^ -o $@
+	$(CC) -lm $^ -o $@
 
 lib: libr.a libr.so
 
