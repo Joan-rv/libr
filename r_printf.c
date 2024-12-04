@@ -207,9 +207,28 @@ bool handle_nan_or_inf(double n, int flags, int* b) {
     }
 }
 
-int print_decimal(double n, int flags) {
+int print_decimal(double n, int flags, int width) {
     char c;
     int b = 0;
+    int num_width = 0;
+    if (signbit(n) || flags & (F_SIGNALWAYS | F_SPACE)) {
+        num_width++;
+    }
+    if (isnan(n) || isinf(n)) {
+        num_width += 3;
+    } else {
+        if (signbit(n)) {
+            num_width += (long long)(log10(-n)) + 1;
+        } else {
+            num_width += (long long)(log10(n)) + 1;
+        }
+    }
+    num_width += 7;
+    if (!(flags & F_LEFTADJUST)) {
+        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+            return -1;
+        }
+    }
     if (signbit(n)) {
         n = -n;
         c = '-';
@@ -226,25 +245,29 @@ int print_decimal(double n, int flags) {
             return -1;
         }
     }
-    if (handle_nan_or_inf(n, flags, &b)) {
-        return b;
-    }
-    if ((b = add_or_error(print_unsigned((unsigned int)n, 10, flags, 0), b)) <
-        0) {
-        return -1;
-    }
-    c = '.';
-    if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-        return -1;
-    }
-    // add 0.0000005 to round (6 zeros after decimal point)
-    double d = (n + 0.0000005f - (int)n) * 10;
-    for (int i = 0; i < 6; i++) {
-        c = (int)d % 10 + '0';
+    if (!handle_nan_or_inf(n, flags, &b)) {
+        if ((b = add_or_error(print_unsigned((unsigned int)n, 10, flags, 0),
+                              b)) < 0) {
+            return -1;
+        }
+        c = '.';
         if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
             return -1;
         }
-        d *= 10;
+        // add 0.0000005 to round (6 zeros after decimal point)
+        double d = (n + 0.0000005f - (int)n) * 10;
+        for (int i = 0; i < 6; i++) {
+            c = (int)d % 10 + '0';
+            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+                return -1;
+            }
+            d *= 10;
+        }
+    }
+    if (flags & F_LEFTADJUST) {
+        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+            return -1;
+        }
     }
     return b;
 }
@@ -418,13 +441,13 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     case 'f': {
         double d = va_arg(*args, double);
         *fmt += 2;
-        return print_decimal(d, flags);
+        return print_decimal(d, flags, width);
     }
     case 'F': {
         double d = va_arg(*args, double);
         flags |= F_UPPERCASE;
         *fmt += 2;
-        return print_decimal(d, flags);
+        return print_decimal(d, flags, width);
     }
     case 'e': {
         double d = va_arg(*args, double);
