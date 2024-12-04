@@ -225,6 +225,8 @@ int print_decimal(double n, int flags, int width, int precision) {
     }
     if (precision > 0) {
         num_width += precision + 1;
+    } else if (flags & F_ALTERNATE) {
+        num_width++;
     }
     if (!(flags & F_LEFTADJUST)) {
         if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
@@ -252,11 +254,13 @@ int print_decimal(double n, int flags, int width, int precision) {
                               b)) < 0) {
             return -1;
         }
-        if (precision > 0) {
+        if (precision > 0 || flags & F_ALTERNATE) {
             c = '.';
             if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
                 return -1;
             }
+        }
+        if (precision > 0) {
             double d = (n - (int)n) * 10;
             for (int i = 0; i < precision - 1; i++) {
                 c = (int)d % 10 + '0';
@@ -415,7 +419,7 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
         *fmt += 1;
         return arg_parse(fmt, args, flags);
     case '#':
-        // TODO: handle floating point alternate formats
+        // TODO: handle exponential alternate formats
         flags |= F_ALTERNATE;
         *fmt += 1;
         return arg_parse(fmt, args, flags);
