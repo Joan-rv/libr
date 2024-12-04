@@ -207,7 +207,7 @@ bool handle_nan_or_inf(double n, int flags, int* b) {
     }
 }
 
-int print_decimal(double n, int flags, int width) {
+int print_decimal(double n, int flags, int width, int precision) {
     char c;
     int b = 0;
     int num_width = 0;
@@ -223,7 +223,9 @@ int print_decimal(double n, int flags, int width) {
             num_width += (long long)(log10(n)) + 1;
         }
     }
-    num_width += 7;
+    if (precision > 0) {
+        num_width += precision + 1;
+    }
     if (!(flags & F_LEFTADJUST)) {
         if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
             return -1;
@@ -250,18 +252,24 @@ int print_decimal(double n, int flags, int width) {
                               b)) < 0) {
             return -1;
         }
-        c = '.';
-        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-            return -1;
-        }
-        // add 0.0000005 to round (6 zeros after decimal point)
-        double d = (n + 0.0000005f - (int)n) * 10;
-        for (int i = 0; i < 6; i++) {
-            c = (int)d % 10 + '0';
+        if (precision > 0) {
+            c = '.';
             if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
                 return -1;
             }
-            d *= 10;
+            double d = (n - (int)n) * 10;
+            for (int i = 0; i < precision - 1; i++) {
+                c = (int)d % 10 + '0';
+                if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+                    return -1;
+                }
+                d *= 10;
+            }
+            // add 0.5f to round
+            c = (int)(d + 0.5f) % 10 + '0';
+            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+                return -1;
+            }
         }
     }
     if (flags & F_LEFTADJUST) {
@@ -421,13 +429,16 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     }
 
     // read precision
+    int precision;
     if ((*fmt)[1] == '.') {
+        precision = 0;
         *fmt += 1;
-        int precision = 0;
         while ('0' <= (*fmt)[1] && (*fmt)[1] <= '9') {
             precision = precision * 10 + (*fmt)[1] - '0';
             *fmt += 1;
         }
+    } else {
+        precision = 6;
     }
 
     // read conversion
@@ -472,13 +483,13 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     case 'f': {
         double d = va_arg(*args, double);
         *fmt += 2;
-        return print_decimal(d, flags, width);
+        return print_decimal(d, flags, width, precision);
     }
     case 'F': {
         double d = va_arg(*args, double);
         flags |= F_UPPERCASE;
         *fmt += 2;
-        return print_decimal(d, flags, width);
+        return print_decimal(d, flags, width, precision);
     }
     case 'e': {
         double d = va_arg(*args, double);
