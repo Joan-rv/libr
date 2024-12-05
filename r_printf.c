@@ -45,19 +45,30 @@ int print_spaces(int n) {
 }
 
 int print_unsigned(unsigned long long n, unsigned int base, int flags,
-                   int width) {
+                   int width, int precision) {
     char c;
     int b = 0;
-    int num_width = 0;
-    if (flags & F_ALTERNATE) {
-        if (base == 8) {
-            num_width++;
-        } else if (base == 16) {
-            num_width += 2;
+    int num_width;
+    int num_digits;
+    if (precision > 0 || width != 0) {
+        num_digits = (long long)(log2(n) / log2(base)) + 1;
+    }
+    if (width != 0) {
+        num_width = 0;
+        if (flags & F_ALTERNATE) {
+            if (base == 8) {
+                num_width++;
+            } else if (base == 16) {
+                num_width += 2;
+            }
+        }
+        if (precision > num_digits) {
+            num_width += precision;
+        } else {
+            num_width += num_digits;
         }
     }
-    num_width += (long long)(log2(n) / log2(base)) + 1;
-    if (!(flags & F_LEFTADJUST)) {
+    if (!(flags & F_LEFTADJUST) && width != 0) {
         if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
             return -1;
         }
@@ -81,18 +92,28 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
             }
         }
     }
+
+    if (precision > 0) {
+        c = '0';
+        for (int i = 0; i < precision - num_digits; i++) {
+            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+                return -1;
+            }
+        }
+    }
+
     c = digit_to_char(n % base, flags);
     if (n >= base) {
         if ((b = add_or_error(
-                 print_unsigned(n / base, base, flags & ~F_ALTERNATE, 0), b)) <
-            0) {
+                 print_unsigned(n / base, base, flags & ~F_ALTERNATE, 0, 0),
+                 b)) < 0) {
             return -1;
         }
     }
     if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
         return -1;
     }
-    if (flags & F_LEFTADJUST) {
+    if (flags & F_LEFTADJUST && width != 0) {
         if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
             return -1;
         }
@@ -135,7 +156,7 @@ int print_signed(long long n, int base, int flags, int width) {
             return -1;
         }
     }
-    if ((b = add_or_error(print_unsigned(n, base, flags & ~F_SIGNALWAYS, 0),
+    if ((b = add_or_error(print_unsigned(n, base, flags & ~F_SIGNALWAYS, 0, 0),
                           b)) < 0) {
         return -1;
     }
@@ -168,7 +189,7 @@ int print_pointer(void* p, int flags, int width) {
     if ((b = add_or_error(write(STDOUT_FILENO, prefix, 2), b)) < 0) {
         return -1;
     }
-    if ((b = add_or_error(print_unsigned((size_t)p, 16, 0, 0), b)) < 0) {
+    if ((b = add_or_error(print_unsigned((size_t)p, 16, 0, 0, 0), b)) < 0) {
         return -1;
     }
     if (flags & F_LEFTADJUST) {
@@ -228,6 +249,9 @@ int print_decimal(double n, int flags, int width, int precision) {
     } else if (flags & F_ALTERNATE) {
         num_width++;
     }
+    if (precision < 0) {
+        precision = 6;
+    }
     if (!(flags & F_LEFTADJUST)) {
         if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
             return -1;
@@ -252,7 +276,7 @@ int print_decimal(double n, int flags, int width, int precision) {
     if (!handle_nan_or_inf(n, flags, &b)) {
         // add 5 to last decimal to round up
         n += 0.5f * pow(10, -precision);
-        if ((b = add_or_error(print_unsigned((unsigned int)n, 10, flags, 0),
+        if ((b = add_or_error(print_unsigned((unsigned int)n, 10, flags, 0, 0),
                               b)) < 0) {
             return -1;
         }
@@ -313,6 +337,11 @@ int print_exponential(double n, int flags, int width, int precision) {
             num_width += (long long)(log10(n)) + 1;
         }
     }
+
+    if (precision < 0) {
+        precision = 6;
+    }
+
     if (e < 0) {
         num_width++;
     }
@@ -394,7 +423,7 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     }
 
     // read precision
-    int precision;
+    int precision = -1;
     if ((*fmt)[1] == '.') {
         precision = 0;
         *fmt += 1;
@@ -402,8 +431,6 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
             precision = precision * 10 + (*fmt)[1] - '0';
             *fmt += 1;
         }
-    } else {
-        precision = 6;
     }
 
     // read conversion
@@ -422,23 +449,23 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     case 'u': {
         unsigned int i = va_arg(*args, unsigned int);
         *fmt += 2;
-        return print_unsigned(i, 10, flags, width);
+        return print_unsigned(i, 10, flags, width, precision);
     }
     case 'o': {
         unsigned int i = va_arg(*args, int);
         *fmt += 2;
-        return print_unsigned(i, 8, flags, width);
+        return print_unsigned(i, 8, flags, width, precision);
     }
     case 'x': {
         unsigned int i = va_arg(*args, int);
         *fmt += 2;
-        return print_unsigned(i, 16, flags, width);
+        return print_unsigned(i, 16, flags, width, precision);
     }
     case 'X': {
         unsigned int i = va_arg(*args, int);
         flags |= F_UPPERCASE;
         *fmt += 2;
-        return print_unsigned(i, 16, flags, width);
+        return print_unsigned(i, 16, flags, width, precision);
     }
     case 'p': {
         void* p = va_arg(*args, void*);
