@@ -285,25 +285,17 @@ int print_exponential(double n, int flags, int width) {
     char c;
     int b = 0;
 
-    int e = 6, m;
-    if (n == 0) {
-        m = 0;
-        e = 0;
-    } else {
-        double g = n;
-        m = n;
-        while (m < 1000000) {
-            g *= 10;
-            m = g;
+    int e = 0;
+    double m = n;
+    if (m != 0) {
+        while (m < 1) {
+            m *= 10;
             e--;
         }
-        while (m > 9999999) {
-            g /= 10;
-            m = g;
+        while (m >= 10) {
+            m /= 10;
             e++;
         }
-        // round m
-        m = ((int)(g * 10) + 5) / 10;
     }
 
     int num_width = 0;
@@ -330,37 +322,9 @@ int print_exponential(double n, int flags, int width) {
             return -1;
         }
     }
-
-    if (signbit(n)) {
-        n = -n;
-        c = '-';
-        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-            return -1;
-        }
-    } else if (flags & (F_SIGNALWAYS | F_SPACE)) {
-        if (flags & F_SIGNALWAYS) {
-            c = '+';
-        } else {
-            c = ' ';
-        }
-        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-            return -1;
-        }
-    }
     if (!handle_nan_or_inf(n, flags, &b)) {
-        c = digit_to_char((m / 1000000) % 10, flags);
-        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
+        if ((b = add_or_error(print_decimal(m, flags, 0, 6), b)) < 0) {
             return -1;
-        }
-        c = '.';
-        if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-            return -1;
-        }
-        for (int p = 100000; p > 0; p /= 10) {
-            c = digit_to_char((m / p) % 10, flags);
-            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-                return -1;
-            }
         }
         if (flags & F_UPPERCASE) {
             c = 'E';
