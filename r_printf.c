@@ -250,6 +250,8 @@ int print_decimal(double n, int flags, int width, int precision) {
         }
     }
     if (!handle_nan_or_inf(n, flags, &b)) {
+        // add 5 to last decimal to round up
+        n += 0.5f * pow(10, -precision);
         if ((b = add_or_error(print_unsigned((unsigned int)n, 10, flags, 0),
                               b)) < 0) {
             return -1;
@@ -262,17 +264,12 @@ int print_decimal(double n, int flags, int width, int precision) {
         }
         if (precision > 0) {
             double d = (n - (int)n) * 10;
-            for (int i = 0; i < precision - 1; i++) {
+            for (int i = 0; i < precision; i++) {
                 c = (int)d % 10 + '0';
                 if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
                     return -1;
                 }
                 d *= 10;
-            }
-            // add 0.5f to round
-            c = (int)(d + 0.5f) % 10 + '0';
-            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-                return -1;
             }
         }
     }
