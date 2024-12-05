@@ -121,7 +121,7 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
     return b;
 }
 
-int print_signed(long long n, int base, int flags, int width) {
+int print_signed(long long n, int base, int flags, int width, int precision) {
     char c;
     int b = 0;
 
@@ -129,10 +129,16 @@ int print_signed(long long n, int base, int flags, int width) {
     if (n < 0 || flags & (F_SIGNALWAYS | F_SPACE)) {
         num_width++;
     }
+    int num_digits;
     if (n < 0) {
-        num_width += (long long)(log2(-n) / log2(base)) + 1;
+        num_digits = (long long)(log2(-n) / log2(base)) + 1;
     } else {
-        num_width += (long long)(log2(n) / log2(base)) + 1;
+        num_digits = (long long)(log2(n) / log2(base)) + 1;
+    }
+    if (precision > num_digits) {
+        num_width += precision;
+    } else {
+        num_width += num_digits;
     }
     if (!(flags & F_LEFTADJUST)) {
         if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
@@ -156,8 +162,9 @@ int print_signed(long long n, int base, int flags, int width) {
             return -1;
         }
     }
-    if ((b = add_or_error(print_unsigned(n, base, flags & ~F_SIGNALWAYS, 0, 0),
-                          b)) < 0) {
+    if ((b = add_or_error(
+             print_unsigned(n, base, flags & ~F_SIGNALWAYS, 0, precision), b)) <
+        0) {
         return -1;
     }
     if (flags & F_LEFTADJUST) {
@@ -365,7 +372,7 @@ int print_exponential(double n, int flags, int width, int precision) {
         }
 
         if (e > 9) {
-            print_signed(e, 10, 0, 0);
+            print_signed(e, 10, 0, 0, 0);
         } else {
             if (e < 0) {
                 c = '-';
@@ -444,7 +451,7 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     case 'i': {
         int i = va_arg(*args, int);
         *fmt += 2;
-        return print_signed(i, 10, flags, width);
+        return print_signed(i, 10, flags, width, precision);
     }
     case 'u': {
         unsigned int i = va_arg(*args, unsigned int);
