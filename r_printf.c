@@ -371,24 +371,8 @@ int print_exponential(double n, int flags, int width, int precision) {
             return -1;
         }
 
-        if (e > 9) {
-            print_signed(e, 10, 0, 0, 0);
-        } else {
-            if (e < 0) {
-                c = '-';
-                e = -e;
-            } else {
-                c = '+';
-            }
-            if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-                return -1;
-            }
-            for (int p = 10; p > 0; p /= 10) {
-                c = digit_to_char((e / p) % 10, 0);
-                if ((b = add_or_error(write(STDOUT_FILENO, &c, 1), b)) < 0) {
-                    return -1;
-                }
-            }
+        if ((b = add_or_error(print_signed(e, 10, 0, 0, 2), b)) < 0) {
+            return -1;
         }
     }
 
