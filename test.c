@@ -5,7 +5,7 @@
 int main() {
     char* fmt = "Hi %c, %-10d, %+d, % d, %+20u, %#10o, %#X, %10p, %10p, 50%%, "
                 "%+20.10f, %#.0f, %+5.0f,"
-                "%+20E, %F, %f, "
+                "%+20.4E, %F, %f, "
                 "%s, %m\n";
     int r1 = r_printf(fmt, 'a', -222, 222, 222, -1, 15, 15, fmt, NULL, 22.2f,
                       22.2f, 22.2f, 0.02f, -INFINITY, -NAN, "hello");

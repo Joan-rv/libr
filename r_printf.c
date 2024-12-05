@@ -281,7 +281,7 @@ int print_decimal(double n, int flags, int width, int precision) {
     return b;
 }
 
-int print_exponential(double n, int flags, int width) {
+int print_exponential(double n, int flags, int width, int precision) {
     char c;
     int b = 0;
 
@@ -316,14 +316,14 @@ int print_exponential(double n, int flags, int width) {
     if (e < 0) {
         num_width++;
     }
-    num_width += 9;
+    num_width += precision + 3;
     if (!(flags & F_LEFTADJUST)) {
         if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
             return -1;
         }
     }
     if (!handle_nan_or_inf(n, flags, &b)) {
-        if ((b = add_or_error(print_decimal(m, flags, 0, 6), b)) < 0) {
+        if ((b = add_or_error(print_decimal(m, flags, 0, precision), b)) < 0) {
             return -1;
         }
         if (flags & F_UPPERCASE) {
@@ -459,13 +459,13 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
     case 'e': {
         double d = va_arg(*args, double);
         *fmt += 2;
-        return print_exponential(d, flags, width);
+        return print_exponential(d, flags, width, precision);
     }
     case 'E': {
         double d = va_arg(*args, double);
         flags |= F_UPPERCASE;
         *fmt += 2;
-        return print_exponential(d, flags, width);
+        return print_exponential(d, flags, width, precision);
     }
     case 's': {
         char* s = va_arg(*args, char*);
