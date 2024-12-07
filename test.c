@@ -13,5 +13,7 @@ int main() {
     int r2 = printf(fmt, 'a', -222, 222, 222, -1, 15, 15, fmt, NULL, 22.2f,
                     22.2f, 22.2f, 0.02f, -INFINITY, -NAN, "hello");
     printf("r1=%d, r2=%d\n", r1, r2);
-    printf("r_gcd(4, -36)=%d\n", r_gcd(4, -18));
+    printf("r_abs(-36)=%d\n", r_abs(-36));
+    printf("r_gcd(4, -36)=%d\n", r_gcd(4, -36));
+    printf("r_lcm(4, -36)=%d\n", r_lcm(4, -36));
 }
