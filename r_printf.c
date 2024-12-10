@@ -10,6 +10,7 @@
 #define F_SPACE (1 << 2)
 #define F_ALTERNATE (1 << 3)
 #define F_LEFTADJUST (1 << 4)
+#define F_ZEROPAD (1 << 5)
 
 int add_or_error(ssize_t r, int b) {
     if (r < 0) {
@@ -33,7 +34,7 @@ char digit_to_char(unsigned int d, int flags) {
     }
 }
 
-int print_spaces(int n) {
+int print_padding(int n) {
     char c = ' ';
     int b = 0;
     for (int i = 0; i < n; i++) {
@@ -69,7 +70,7 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
         }
     }
     if (!(flags & F_LEFTADJUST) && width != 0) {
-        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+        if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
@@ -114,7 +115,7 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
         return -1;
     }
     if (flags & F_LEFTADJUST && width != 0) {
-        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+        if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
@@ -140,8 +141,16 @@ int print_signed(long long n, int base, int flags, int width, int precision) {
     } else {
         num_width += num_digits;
     }
+    if (!(flags & F_LEFTADJUST) && flags & F_ZEROPAD && precision == -1) {
+        precision = width;
+        if (n < 0 || flags & (F_SIGNALWAYS | F_SPACE)) {
+            precision--;
+        }
+        width = 0;
+    }
+
     if (!(flags & F_LEFTADJUST)) {
-        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+        if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
@@ -168,7 +177,7 @@ int print_signed(long long n, int base, int flags, int width, int precision) {
         return -1;
     }
     if (flags & F_LEFTADJUST) {
-        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+        if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
@@ -184,7 +193,7 @@ int print_pointer(void* p, int flags, int width) {
         num_width = 2 + (long long)log2((size_t)p) / 4 + 1;
     }
     if (!(flags & F_LEFTADJUST)) {
-        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+        if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
@@ -200,7 +209,7 @@ int print_pointer(void* p, int flags, int width) {
         return -1;
     }
     if (flags & F_LEFTADJUST) {
-        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+        if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
@@ -260,7 +269,7 @@ int print_decimal(double n, int flags, int width, int precision) {
         precision = 6;
     }
     if (!(flags & F_LEFTADJUST)) {
-        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+        if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
@@ -305,7 +314,7 @@ int print_decimal(double n, int flags, int width, int precision) {
         }
     }
     if (flags & F_LEFTADJUST) {
-        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+        if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
@@ -354,7 +363,7 @@ int print_exponential(double n, int flags, int width, int precision) {
     }
     num_width += precision + 3;
     if (!(flags & F_LEFTADJUST)) {
-        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+        if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
@@ -377,7 +386,7 @@ int print_exponential(double n, int flags, int width, int precision) {
     }
 
     if (flags & F_LEFTADJUST) {
-        if ((b = add_or_error(print_spaces(width - num_width), b)) < 0) {
+        if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
@@ -397,6 +406,10 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
         return arg_parse(fmt, args, flags);
     case '-':
         flags |= F_LEFTADJUST;
+        *fmt += 1;
+        return arg_parse(fmt, args, flags);
+    case '0':
+        flags |= F_ZEROPAD;
         *fmt += 1;
         return arg_parse(fmt, args, flags);
     case '#':
