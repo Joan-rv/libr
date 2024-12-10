@@ -72,6 +72,13 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
 
     if (!(flags & F_LEFTADJUST) && flags & F_ZEROPAD && precision == -1) {
         precision = width;
+        if (flags & F_ALTERNATE) {
+            if (base == 8) {
+                precision--;
+            } else if (base == 16) {
+                precision -= 2;
+            }
+        }
         width = 0;
     }
 
