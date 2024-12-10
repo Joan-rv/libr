@@ -261,6 +261,7 @@ int print_decimal(double n, int flags, int width, int precision) {
     char c;
     int b = 0;
     int num_width = 0;
+    int zeropad_precision;
     if (signbit(n) || flags & (F_SIGNALWAYS | F_SPACE)) {
         num_width++;
     }
@@ -268,10 +269,11 @@ int print_decimal(double n, int flags, int width, int precision) {
         num_width += 3;
     } else {
         if (signbit(n)) {
-            num_width += (long long)(log10(-n)) + 1;
+            zeropad_precision = (long long)(log10(-n)) + 1;
         } else {
-            num_width += (long long)(log10(n)) + 1;
+            zeropad_precision = (long long)(log10(n)) + 1;
         }
+        num_width += zeropad_precision;
     }
     if (precision > 0) {
         num_width += precision + 1;
@@ -281,6 +283,14 @@ int print_decimal(double n, int flags, int width, int precision) {
     if (precision < 0) {
         precision = 6;
     }
+
+    if (!(flags & F_LEFTADJUST) && flags & F_ZEROPAD) {
+        zeropad_precision += width - num_width;
+        width = 0;
+    } else {
+        zeropad_precision = 0;
+    }
+
     if (!(flags & F_LEFTADJUST)) {
         if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
@@ -305,7 +315,8 @@ int print_decimal(double n, int flags, int width, int precision) {
     if (!handle_nan_or_inf(n, flags, &b)) {
         // add 5 to last decimal to round up
         n += 0.5f * pow(10, -precision);
-        if ((b = add_or_error(print_unsigned((unsigned int)n, 10, flags, 0, 0),
+        if ((b = add_or_error(print_unsigned((unsigned int)n, 10, flags, 0,
+                                             zeropad_precision),
                               b)) < 0) {
             return -1;
         }
