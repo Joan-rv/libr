@@ -69,6 +69,12 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
             num_width += num_digits;
         }
     }
+
+    if (!(flags & F_LEFTADJUST) && flags & F_ZEROPAD && precision == -1) {
+        precision = width;
+        width = 0;
+    }
+
     if (!(flags & F_LEFTADJUST) && width != 0) {
         if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
