@@ -362,6 +362,7 @@ int print_exponential(double n, int flags, int width, int precision) {
         }
     }
 
+    int zeropad_precision;
     int num_width = 0;
     if (signbit(n) || flags & (F_SIGNALWAYS | F_SPACE)) {
         num_width++;
@@ -369,13 +370,15 @@ int print_exponential(double n, int flags, int width, int precision) {
     if (isnan(n) || isinf(n)) {
         num_width += 3;
     } else if (e < 100) {
+        zeropad_precision = 2;
         num_width += 2;
     } else {
         if (e < 0) {
-            num_width += (long long)(log10(-n)) + 1;
+            zeropad_precision = (long long)(log10(-n)) + 1;
         } else {
-            num_width += (long long)(log10(n)) + 1;
+            zeropad_precision = (long long)(log10(n)) + 1;
         }
+        num_width += zeropad_precision;
     }
 
     if (precision < 0) {
@@ -386,13 +389,24 @@ int print_exponential(double n, int flags, int width, int precision) {
         num_width++;
     }
     num_width += precision + 3;
+
+    if (!isnan(n) && !isinf(n) && !(flags & F_LEFTADJUST) &&
+        flags & F_ZEROPAD) {
+        zeropad_precision = width - zeropad_precision - 2;
+        width = 0;
+    } else {
+        zeropad_precision = 0;
+    }
+
     if (!(flags & F_LEFTADJUST)) {
         if ((b = add_or_error(print_padding(width - num_width), b)) < 0) {
             return -1;
         }
     }
     if (!handle_nan_or_inf(n, flags, &b)) {
-        if ((b = add_or_error(print_decimal(m, flags, 0, precision), b)) < 0) {
+        if ((b = add_or_error(
+                 print_decimal(m, flags, zeropad_precision, precision), b)) <
+            0) {
             return -1;
         }
         if (flags & F_UPPERCASE) {
