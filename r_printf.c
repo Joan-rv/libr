@@ -451,7 +451,6 @@ int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
         *fmt += 1;
         return arg_parse(fmt, args, flags);
     case '#':
-        // TODO: handle exponential alternate formats
         flags |= F_ALTERNATE;
         *fmt += 1;
         return arg_parse(fmt, args, flags);
