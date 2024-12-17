@@ -2,6 +2,8 @@
 #include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -148,7 +150,7 @@ int print_unsigned(unsigned long long n, unsigned int base, Flags flags,
     return b;
 }
 
-int print_signed(long long n, int base, Flags flags, int width, int precision) {
+int print_signed(intmax_t n, int base, Flags flags, int width, int precision) {
     char c;
     int b = 0;
 
@@ -510,6 +512,24 @@ Length read_length_modifier(const char* restrict* fmt) {
     }
 }
 
+intmax_t read_signed(va_list* args, Length length) {
+    if (length & (L_CHAR | L_SHORT)) {
+        return va_arg(*args, int);
+    } else if (length & L_LONG) {
+        return va_arg(*args, long);
+    } else if (length & L_LONGLONG) {
+        return va_arg(*args, long long);
+    } else if (length & L_INTMAX) {
+        return va_arg(*args, intmax_t);
+    } else if (length & L_SIZET) {
+        return va_arg(*args, ssize_t);
+    } else if (length & L_PTRDIFF) {
+        return va_arg(*args, ptrdiff_t);
+    } else {
+        return va_arg(*args, int);
+    }
+}
+
 int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
     // read flags
     switch ((*fmt)[1]) {
@@ -564,7 +584,7 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
     }
     case 'd':
     case 'i': {
-        int i = va_arg(*args, int);
+        intmax_t i = read_signed(args, length);
         *fmt += 2;
         return print_signed(i, 10, flags, width, precision);
     }
