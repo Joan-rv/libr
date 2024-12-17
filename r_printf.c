@@ -21,7 +21,6 @@ typedef enum {
     L_SHORT = 1 << 1,
     L_LONG = 1 << 2,
     L_LONGLONG = 1 << 3,
-    L_LONGDOUBLE = 1 << 4,
     L_INTMAX = 1 << 5,
     L_SIZET = 1 << 6,
     L_PTRDIFF = 1 << 7,
@@ -490,10 +489,8 @@ Length read_length_modifier(const char* restrict* fmt) {
             }
             break;
         case 'q':
-            length |= L_LONGLONG;
-            break;
         case 'L':
-            length |= L_LONGDOUBLE;
+            length |= L_LONGLONG;
             break;
         case 'j':
             length |= L_INTMAX;
