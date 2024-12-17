@@ -60,8 +60,8 @@ int print_padding(int n) {
     return b;
 }
 
-int print_unsigned(unsigned long long n, unsigned int base, Flags flags,
-                   int width, int precision) {
+int print_unsigned(uintmax_t n, unsigned int base, Flags flags, int width,
+                   int precision) {
     char c;
     int b = 0;
     int num_width;
@@ -530,6 +530,24 @@ intmax_t read_signed(va_list* args, Length length) {
     }
 }
 
+uintmax_t read_unsigned(va_list* args, Length length) {
+    if (length & (L_CHAR | L_SHORT)) {
+        return va_arg(*args, unsigned int);
+    } else if (length & L_LONG) {
+        return va_arg(*args, unsigned long);
+    } else if (length & L_LONGLONG) {
+        return va_arg(*args, unsigned long long);
+    } else if (length & L_INTMAX) {
+        return va_arg(*args, uintmax_t);
+    } else if (length & L_SIZET) {
+        return va_arg(*args, size_t);
+    } else if (length & L_PTRDIFF) {
+        return va_arg(*args, ptrdiff_t);
+    } else {
+        return va_arg(*args, int);
+    }
+}
+
 int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
     // read flags
     switch ((*fmt)[1]) {
@@ -589,22 +607,22 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
         return print_signed(i, 10, flags, width, precision);
     }
     case 'u': {
-        unsigned int i = va_arg(*args, unsigned int);
+        uintmax_t i = read_unsigned(args, length);
         *fmt += 2;
         return print_unsigned(i, 10, flags, width, precision);
     }
     case 'o': {
-        unsigned int i = va_arg(*args, unsigned int);
+        uintmax_t i = read_unsigned(args, length);
         *fmt += 2;
         return print_unsigned(i, 8, flags, width, precision);
     }
     case 'x': {
-        unsigned int i = va_arg(*args, unsigned int);
+        uintmax_t i = read_unsigned(args, length);
         *fmt += 2;
         return print_unsigned(i, 16, flags, width, precision);
     }
     case 'X': {
-        unsigned int i = va_arg(*args, unsigned int);
+        uintmax_t i = read_unsigned(args, length);
         flags |= F_UPPERCASE;
         *fmt += 2;
         return print_unsigned(i, 16, flags, width, precision);
