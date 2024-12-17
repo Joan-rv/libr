@@ -377,13 +377,18 @@ int print_exponential(double n, int base, int flags, int width, int precision) {
     if (isnan(n) || isinf(n)) {
         num_width += 3;
     } else if (e < 100) {
-        zeropad_precision = 2;
-        num_width += 2;
+        if (base == 10 || e >= 10) {
+            zeropad_precision = 2;
+            num_width += 2;
+        } else {
+            zeropad_precision = 1;
+            num_width += 1;
+        }
     } else {
         if (e < 0) {
-            zeropad_precision = (long long)(log10(-n)) + 1;
+            zeropad_precision = (long long)(log(-n) / log(base)) + 1;
         } else {
-            zeropad_precision = (long long)(log10(n)) + 1;
+            zeropad_precision = (long long)(log(n) / log(base)) + 1;
         }
         num_width += zeropad_precision;
     }
@@ -391,7 +396,10 @@ int print_exponential(double n, int base, int flags, int width, int precision) {
     if (precision < 0) {
         precision = 6;
     }
-
+    if (base == 16) {
+        num_width += 2;
+        zeropad_precision += 2;
+    }
     if (e < 0) {
         num_width++;
     }
