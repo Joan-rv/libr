@@ -5,12 +5,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#define F_UPPERCASE (1 << 0)
-#define F_SIGNALWAYS (1 << 1)
-#define F_SPACE (1 << 2)
-#define F_ALTERNATE (1 << 3)
-#define F_LEFTADJUST (1 << 4)
-#define F_ZEROPAD (1 << 5)
+typedef enum {
+    F_UPPERCASE = (1 << 0),
+    F_SIGNALWAYS = (1 << 1),
+    F_SPACE = (1 << 2),
+    F_ALTERNATE = (1 << 3),
+    F_LEFTADJUST = (1 << 4),
+    F_ZEROPAD = (1 << 5),
+} Flags;
 
 int add_or_error(ssize_t r, int b) {
     if (r < 0) {
@@ -22,7 +24,7 @@ int add_or_error(ssize_t r, int b) {
     return r + b;
 }
 
-char digit_to_char(unsigned int d, int flags) {
+char digit_to_char(unsigned int d, Flags flags) {
     if (d < 10) {
         return d + '0';
     } else {
@@ -45,7 +47,7 @@ int print_padding(int n) {
     return b;
 }
 
-int print_unsigned(unsigned long long n, unsigned int base, int flags,
+int print_unsigned(unsigned long long n, unsigned int base, Flags flags,
                    int width, int precision) {
     char c;
     int b = 0;
@@ -135,7 +137,7 @@ int print_unsigned(unsigned long long n, unsigned int base, int flags,
     return b;
 }
 
-int print_signed(long long n, int base, int flags, int width, int precision) {
+int print_signed(long long n, int base, Flags flags, int width, int precision) {
     char c;
     int b = 0;
 
@@ -197,7 +199,7 @@ int print_signed(long long n, int base, int flags, int width, int precision) {
     return b;
 }
 
-int print_pointer(void* p, int flags, int width) {
+int print_pointer(void* p, Flags flags, int width) {
     int num_width = 0;
     int b = 0;
     if (p == NULL) {
@@ -229,7 +231,7 @@ int print_pointer(void* p, int flags, int width) {
     return b;
 }
 
-bool handle_nan_or_inf(double n, int flags, int* b) {
+bool handle_nan_or_inf(double n, Flags flags, int* b) {
     if (isnan(n)) {
         char nan[3];
         if (flags & F_UPPERCASE) {
@@ -257,7 +259,7 @@ bool handle_nan_or_inf(double n, int flags, int* b) {
     }
 }
 
-int print_decimal(double n, int base, int flags, int width, int precision) {
+int print_decimal(double n, int base, Flags flags, int width, int precision) {
     char c;
     int b = 0;
     int num_width = 0;
@@ -346,7 +348,8 @@ int print_decimal(double n, int base, int flags, int width, int precision) {
     return b;
 }
 
-int print_exponential(double n, int base, int flags, int width, int precision) {
+int print_exponential(double n, int base, Flags flags, int width,
+                      int precision) {
     char c;
     int b = 0;
 
@@ -455,7 +458,7 @@ int print_exponential(double n, int base, int flags, int width, int precision) {
     return b;
 }
 
-int arg_parse(const char* restrict* fmt, va_list* args, int flags) {
+int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
     // read flags
     switch ((*fmt)[1]) {
     case ' ':
