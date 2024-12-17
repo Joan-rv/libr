@@ -513,38 +513,40 @@ Length read_length_modifier(const char* restrict* fmt) {
 }
 
 intmax_t read_signed(va_list* args, Length length) {
-    if (length & (L_CHAR | L_SHORT)) {
-        return va_arg(*args, int);
+    if (length & L_CHAR) {
+        return (char)va_arg(*args, int);
+    } else if (length & L_SHORT) {
+        return (short)va_arg(*args, int);
     } else if (length & L_LONG) {
-        return va_arg(*args, long);
+        return (long)va_arg(*args, long);
     } else if (length & L_LONGLONG) {
-        return va_arg(*args, long long);
+        return (long long)va_arg(*args, long long);
     } else if (length & L_INTMAX) {
         return va_arg(*args, intmax_t);
     } else if (length & L_SIZET) {
-        return va_arg(*args, ssize_t);
+        return (ssize_t)va_arg(*args, ssize_t);
     } else if (length & L_PTRDIFF) {
-        return va_arg(*args, ptrdiff_t);
+        return (ptrdiff_t)va_arg(*args, ptrdiff_t);
     } else {
-        return va_arg(*args, int);
+        return (int)va_arg(*args, int);
     }
 }
 
 uintmax_t read_unsigned(va_list* args, Length length) {
-    if (length & (L_CHAR | L_SHORT)) {
-        return va_arg(*args, unsigned int);
-    } else if (length & L_LONG) {
-        return va_arg(*args, unsigned long);
+    if (length & L_CHAR) {
+        return (unsigned char)va_arg(*args, unsigned int);
+    } else if (length & L_SHORT) {
+        return (unsigned short)va_arg(*args, unsigned int);
     } else if (length & L_LONGLONG) {
-        return va_arg(*args, unsigned long long);
+        return (unsigned long long)va_arg(*args, unsigned long long);
     } else if (length & L_INTMAX) {
         return va_arg(*args, uintmax_t);
     } else if (length & L_SIZET) {
-        return va_arg(*args, size_t);
+        return (size_t)va_arg(*args, size_t);
     } else if (length & L_PTRDIFF) {
-        return va_arg(*args, ptrdiff_t);
+        return (ptrdiff_t)va_arg(*args, ptrdiff_t);
     } else {
-        return va_arg(*args, int);
+        return (unsigned int)va_arg(*args, int);
     }
 }
 
