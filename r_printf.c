@@ -6,13 +6,24 @@
 #include <unistd.h>
 
 typedef enum {
-    F_UPPERCASE = (1 << 0),
-    F_SIGNALWAYS = (1 << 1),
-    F_SPACE = (1 << 2),
-    F_ALTERNATE = (1 << 3),
-    F_LEFTADJUST = (1 << 4),
-    F_ZEROPAD = (1 << 5),
+    F_UPPERCASE = 1 << 0,
+    F_SIGNALWAYS = 1 << 1,
+    F_SPACE = 1 << 2,
+    F_ALTERNATE = 1 << 3,
+    F_LEFTADJUST = 1 << 4,
+    F_ZEROPAD = 1 << 5,
 } Flags;
+
+typedef enum {
+    L_CHAR = 1 << 0,
+    L_SHORT = 1 << 1,
+    L_LONG = 1 << 2,
+    L_LONGLONG = 1 << 3,
+    L_LONGDOUBLE = 1 << 4,
+    L_INTMAX = 1 << 5,
+    L_SIZET = 1 << 6,
+    L_PTRDIFF = 1 << 7,
+} Length;
 
 int add_or_error(ssize_t r, int b) {
     if (r < 0) {
@@ -458,6 +469,47 @@ int print_exponential(double n, int base, Flags flags, int width,
     return b;
 }
 
+Length read_length_modifier(const char* restrict* fmt) {
+    Length length = 0;
+    while (true) {
+        switch ((*fmt)[1]) {
+        case 'h':
+            if (length & L_SHORT) {
+                length |= L_CHAR;
+            } else {
+                length |= L_SHORT;
+            }
+            break;
+        case 'l':
+            if (length & L_LONG) {
+                length |= L_LONGLONG;
+            } else {
+                length |= L_LONGLONG;
+            }
+            break;
+        case 'q':
+            length |= L_LONGLONG;
+            break;
+        case 'L':
+            length |= L_LONGDOUBLE;
+            break;
+        case 'j':
+            length |= L_INTMAX;
+            break;
+        case 'Z':
+        case 'z':
+            length |= L_SIZET;
+            break;
+        case 't':
+            length |= L_PTRDIFF;
+            break;
+        default:
+            return length;
+        }
+        (*fmt)++;
+    }
+}
+
 int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
     // read flags
     switch ((*fmt)[1]) {
@@ -500,6 +552,8 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
             *fmt += 1;
         }
     }
+
+    Length length = read_length_modifier(fmt);
 
     // read conversion
     switch ((*fmt)[1]) {
