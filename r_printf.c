@@ -616,70 +616,59 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
     Length length = read_length_modifier(fmt);
 
     // read conversion
-    switch ((*fmt)[1]) {
+    *fmt += 2;
+    switch ((*fmt)[-1]) {
     case 'd':
     case 'i': {
         intmax_t i = read_signed(args, length);
-        *fmt += 2;
         return print_signed(i, 10, flags, width, precision);
     }
     case 'u': {
         uintmax_t i = read_unsigned(args, length);
-        *fmt += 2;
         return print_unsigned(i, 10, flags, width, precision);
     }
     case 'o': {
         uintmax_t i = read_unsigned(args, length);
-        *fmt += 2;
         return print_unsigned(i, 8, flags, width, precision);
     }
     case 'x': {
         uintmax_t i = read_unsigned(args, length);
-        *fmt += 2;
         return print_unsigned(i, 16, flags, width, precision);
     }
     case 'X': {
         uintmax_t i = read_unsigned(args, length);
         flags |= F_UPPERCASE;
-        *fmt += 2;
         return print_unsigned(i, 16, flags, width, precision);
     }
     case 'p': {
         void* p = va_arg(*args, void*);
-        *fmt += 2;
         return print_pointer(p, flags, width);
     }
     case 'f': {
         long double d = read_double(args, length);
-        *fmt += 2;
         return print_decimal(d, 10, flags, width, precision);
     }
     case 'F': {
         long double d = read_double(args, length);
         flags |= F_UPPERCASE;
-        *fmt += 2;
         return print_decimal(d, 10, flags, width, precision);
     }
     case 'e': {
         long double d = read_double(args, length);
-        *fmt += 2;
         return print_exponential(d, 10, flags, width, precision);
     }
     case 'E': {
         long double d = read_double(args, length);
         flags |= F_UPPERCASE;
-        *fmt += 2;
         return print_exponential(d, 10, flags, width, precision);
     }
     case 'a': {
         long double d = read_double(args, length);
-        *fmt += 2;
         return print_exponential(d, 2, flags, width, precision);
     }
     case 'A': {
         long double d = read_double(args, length);
         flags |= F_UPPERCASE;
-        *fmt += 2;
         return print_exponential(d, 2, flags, width, precision);
     }
     case 'C':
@@ -691,7 +680,6 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
         if (n == (size_t)-1) {
             return -1;
         }
-        *fmt += 2;
         return write(STDOUT_FILENO, s, n);
     }
     case 'S':
@@ -699,18 +687,15 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
         // fall through
     case 's': {
         const char* s = va_arg(*args, const char*);
-        *fmt += 2;
         size_t n = strlen(s);
         return write(STDOUT_FILENO, s, n);
     }
     case 'm': {
         char* s = strerror(errno);
         size_t n = strlen(s);
-        *fmt += 2;
         return write(STDOUT_FILENO, s, n);
     }
     case '%': {
-        *fmt += 2;
         return write(STDOUT_FILENO, *fmt - 2, 1);
     }
     default: {
