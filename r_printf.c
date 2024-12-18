@@ -4,8 +4,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 
 typedef enum {
     F_UPPERCASE = 1 << 0,
@@ -556,6 +558,18 @@ long double read_double(va_list* args, Length length) {
     }
 }
 
+size_t read_char(va_list* args, Length length, char out[]) {
+    if (length & L_LONG) {
+        wint_t c = va_arg(*args, wint_t);
+        mbstate_t state;
+        memset(&state, 0, sizeof(state));
+        return wcrtomb(out, c, &state);
+    } else {
+        out[0] = (char)va_arg(*args, int);
+        return 1;
+    }
+}
+
 int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
     // read flags
     switch ((*fmt)[1]) {
@@ -668,11 +682,21 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
         *fmt += 2;
         return print_exponential(d, 2, flags, width, precision);
     }
+    case 'C':
+        length |= L_LONG;
+        // fall through
     case 'c': {
-        char c = va_arg(*args, int);
-        *fmt += 2;
-        return write(STDOUT_FILENO, &c, 1);
+        char s[MB_CUR_MAX];
+        size_t n = read_char(args, length, s);
+        if (n == (size_t)-1) {
+            return -1;
+        }
+        *fmt += 1 + n;
+        return write(STDOUT_FILENO, s, n);
     }
+    case 'S':
+        length |= L_LONG;
+        // fall through
     case 's': {
         char* s = va_arg(*args, char*);
         *fmt += 2;
