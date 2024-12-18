@@ -700,12 +700,12 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
     case 's': {
         const char* s = va_arg(*args, const char*);
         *fmt += 2;
-        int n = strlen(s);
+        size_t n = strlen(s);
         return write(STDOUT_FILENO, s, n);
     }
     case 'm': {
         char* s = strerror(errno);
-        int n = strlen(s);
+        size_t n = strlen(s);
         *fmt += 2;
         return write(STDOUT_FILENO, s, n);
     }
