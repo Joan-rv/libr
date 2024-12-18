@@ -603,11 +603,6 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
 
     // read conversion
     switch ((*fmt)[1]) {
-    case 'c': {
-        char c = va_arg(*args, int);
-        *fmt += 2;
-        return write(STDOUT_FILENO, &c, 1);
-    }
     case 'd':
     case 'i': {
         intmax_t i = read_signed(args, length);
@@ -672,6 +667,11 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
         flags |= F_UPPERCASE;
         *fmt += 2;
         return print_exponential(d, 2, flags, width, precision);
+    }
+    case 'c': {
+        char c = va_arg(*args, int);
+        *fmt += 2;
+        return write(STDOUT_FILENO, &c, 1);
     }
     case 's': {
         char* s = va_arg(*args, char*);
