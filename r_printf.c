@@ -698,7 +698,7 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
         length |= L_LONG;
         // fall through
     case 's': {
-        char* s = va_arg(*args, char*);
+        const char* s = va_arg(*args, const char*);
         *fmt += 2;
         int n = strlen(s);
         return write(STDOUT_FILENO, s, n);
