@@ -691,7 +691,7 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
         if (n == (size_t)-1) {
             return -1;
         }
-        *fmt += 1 + n;
+        *fmt += 2;
         return write(STDOUT_FILENO, s, n);
     }
     case 'S':
