@@ -485,7 +485,7 @@ Length read_length_modifier(const char* restrict* fmt) {
             if (length & L_LONG) {
                 length |= L_LONGLONG;
             } else {
-                length |= L_LONGLONG;
+                length |= L_LONG;
             }
             break;
         case 'q':
