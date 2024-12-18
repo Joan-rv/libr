@@ -570,6 +570,24 @@ size_t read_char(va_list* args, Length length, char out[]) {
     }
 }
 
+char* read_string(va_list* args, Length length) {
+    if (length & L_LONG) {
+        wchar_t* ws = va_arg(*args, wchar_t*);
+        size_t l = wcstombs(NULL, ws, 0);
+        if (l == (size_t)-1) {
+            return NULL;
+        }
+        char* s = malloc(l + 1);
+        if (s == NULL) {
+            return NULL;
+        }
+        wcstombs(s, ws, l + 1);
+        return s;
+    } else {
+        return (char*)va_arg(*args, char*);
+    }
+}
+
 int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
     // read flags
     switch ((*fmt)[1]) {
@@ -686,9 +704,16 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
         length |= L_LONG;
         // fall through
     case 's': {
-        const char* s = va_arg(*args, const char*);
+        char* s = read_string(args, length);
+        if (s == NULL) {
+            return -1;
+        }
         size_t n = strlen(s);
-        return write(STDOUT_FILENO, s, n);
+        ssize_t b = write(STDOUT_FILENO, s, n);
+        if (length & L_LONG) {
+            free(s);
+        }
+        return b;
     }
     case 'm': {
         char* s = strerror(errno);
