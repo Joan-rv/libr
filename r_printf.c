@@ -271,7 +271,8 @@ bool handle_nan_or_inf(double n, Flags flags, int* b) {
     }
 }
 
-int print_decimal(double n, int base, Flags flags, int width, int precision) {
+int print_decimal(long double n, int base, Flags flags, int width,
+                  int precision) {
     char c;
     int b = 0;
     int num_width = 0;
@@ -360,7 +361,7 @@ int print_decimal(double n, int base, Flags flags, int width, int precision) {
     return b;
 }
 
-int print_exponential(double n, int base, Flags flags, int width,
+int print_exponential(long double n, int base, Flags flags, int width,
                       int precision) {
     char c;
     int b = 0;
@@ -547,6 +548,14 @@ uintmax_t read_unsigned(va_list* args, Length length) {
     }
 }
 
+long double read_double(va_list* args, Length length) {
+    if (length & L_LONGLONG) {
+        return va_arg(*args, long double);
+    } else {
+        return (double)va_arg(*args, double);
+    }
+}
+
 int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
     // read flags
     switch ((*fmt)[1]) {
@@ -632,34 +641,34 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
         return print_pointer(p, flags, width);
     }
     case 'f': {
-        double d = va_arg(*args, double);
+        long double d = read_double(args, length);
         *fmt += 2;
         return print_decimal(d, 10, flags, width, precision);
     }
     case 'F': {
-        double d = va_arg(*args, double);
+        long double d = read_double(args, length);
         flags |= F_UPPERCASE;
         *fmt += 2;
         return print_decimal(d, 10, flags, width, precision);
     }
     case 'e': {
-        double d = va_arg(*args, double);
+        long double d = read_double(args, length);
         *fmt += 2;
         return print_exponential(d, 10, flags, width, precision);
     }
     case 'E': {
-        double d = va_arg(*args, double);
+        long double d = read_double(args, length);
         flags |= F_UPPERCASE;
         *fmt += 2;
         return print_exponential(d, 10, flags, width, precision);
     }
     case 'a': {
-        double d = va_arg(*args, double);
+        long double d = read_double(args, length);
         *fmt += 2;
         return print_exponential(d, 2, flags, width, precision);
     }
     case 'A': {
-        double d = va_arg(*args, double);
+        long double d = read_double(args, length);
         flags |= F_UPPERCASE;
         *fmt += 2;
         return print_exponential(d, 2, flags, width, precision);
