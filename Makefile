@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-fPIC -Wall -Wextra -Werror -g -I.
 AR=ar
 RM=rm -f
-OBJ=r_printf.o r_fmtprint.o r_math.o
+OBJ=r_printf.o r_fmtprint.o r_args.o r_math.o
 
 .PHONY: clean all
 

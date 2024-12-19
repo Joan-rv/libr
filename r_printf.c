@@ -58,83 +58,7 @@ Length read_length_modifier(const char* restrict* fmt) {
     }
 }
 
-intmax_t read_signed(va_list* args, Length length) {
-    if (length & L_CHAR) {
-        return (char)va_arg(*args, int);
-    } else if (length & L_SHORT) {
-        return (short)va_arg(*args, int);
-    } else if (length & L_LONG) {
-        return (long)va_arg(*args, long);
-    } else if (length & L_LONGLONG) {
-        return (long long)va_arg(*args, long long);
-    } else if (length & L_INTMAX) {
-        return va_arg(*args, intmax_t);
-    } else if (length & L_SIZET) {
-        return (ssize_t)va_arg(*args, ssize_t);
-    } else if (length & L_PTRDIFF) {
-        return (ptrdiff_t)va_arg(*args, ptrdiff_t);
-    } else {
-        return (int)va_arg(*args, int);
-    }
-}
-
-uintmax_t read_unsigned(va_list* args, Length length) {
-    if (length & L_CHAR) {
-        return (unsigned char)va_arg(*args, unsigned int);
-    } else if (length & L_SHORT) {
-        return (unsigned short)va_arg(*args, unsigned int);
-    } else if (length & L_LONGLONG) {
-        return (unsigned long long)va_arg(*args, unsigned long long);
-    } else if (length & L_INTMAX) {
-        return va_arg(*args, uintmax_t);
-    } else if (length & L_SIZET) {
-        return (size_t)va_arg(*args, size_t);
-    } else if (length & L_PTRDIFF) {
-        return (ptrdiff_t)va_arg(*args, ptrdiff_t);
-    } else {
-        return (unsigned int)va_arg(*args, int);
-    }
-}
-
-long double read_double(va_list* args, Length length) {
-    if (length & L_LONGLONG) {
-        return va_arg(*args, long double);
-    } else {
-        return (double)va_arg(*args, double);
-    }
-}
-
-size_t read_char(va_list* args, Length length, char out[]) {
-    if (length & L_LONG) {
-        wint_t c = va_arg(*args, wint_t);
-        mbstate_t state;
-        memset(&state, 0, sizeof(state));
-        return wcrtomb(out, c, &state);
-    } else {
-        out[0] = (char)va_arg(*args, int);
-        return 1;
-    }
-}
-
-char* read_string(va_list* args, Length length) {
-    if (length & L_LONG) {
-        wchar_t* ws = va_arg(*args, wchar_t*);
-        size_t l = wcstombs(NULL, ws, 0);
-        if (l == (size_t)-1) {
-            return NULL;
-        }
-        char* s = malloc(l + 1);
-        if (s == NULL) {
-            return NULL;
-        }
-        wcstombs(s, ws, l + 1);
-        return s;
-    } else {
-        return (char*)va_arg(*args, char*);
-    }
-}
-
-int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
+int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
     // read flags
     switch ((*fmt)[1]) {
     case ' ':
@@ -177,86 +101,81 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
         }
     }
 
-    Length length = read_length_modifier(fmt);
+    read_length_modifier(fmt);
 
     // read conversion
     *fmt += 2;
     switch ((*fmt)[-1]) {
     case 'd':
     case 'i': {
-        intmax_t i = read_signed(args, length);
+        intmax_t i = *(intmax_t*)args_read(args, 0);
         return print_signed(i, 10, flags, width, precision);
     }
     case 'u': {
-        uintmax_t i = read_unsigned(args, length);
+        uintmax_t i = *(uintmax_t*)args_read(args, 0);
         return print_unsigned(i, 10, flags, width, precision);
     }
     case 'o': {
-        uintmax_t i = read_unsigned(args, length);
+        uintmax_t i = *(uintmax_t*)args_read(args, 0);
         return print_unsigned(i, 8, flags, width, precision);
     }
     case 'x': {
-        uintmax_t i = read_unsigned(args, length);
+        uintmax_t i = *(uintmax_t*)args_read(args, 0);
         return print_unsigned(i, 16, flags, width, precision);
     }
     case 'X': {
-        uintmax_t i = read_unsigned(args, length);
+        uintmax_t i = *(uintmax_t*)args_read(args, 0);
         flags |= F_UPPERCASE;
         return print_unsigned(i, 16, flags, width, precision);
     }
     case 'p': {
-        void* p = va_arg(*args, void*);
+        void* p = *(void**)args_read(args, 0);
         return print_pointer(p, flags, width);
     }
     case 'f': {
-        long double d = read_double(args, length);
+        long double d = *(long double*)args_read(args, 0);
         return print_decimal(d, 10, flags, width, precision);
     }
     case 'F': {
-        long double d = read_double(args, length);
+        long double d = *(long double*)args_read(args, 0);
         flags |= F_UPPERCASE;
         return print_decimal(d, 10, flags, width, precision);
     }
     case 'e': {
-        long double d = read_double(args, length);
+        long double d = *(long double*)args_read(args, 0);
         return print_exponential(d, 10, flags, width, precision);
     }
     case 'E': {
-        long double d = read_double(args, length);
+        long double d = *(long double*)args_read(args, 0);
         flags |= F_UPPERCASE;
         return print_exponential(d, 10, flags, width, precision);
     }
     case 'a': {
-        long double d = read_double(args, length);
+        long double d = *(long double*)args_read(args, 0);
         return print_exponential(d, 2, flags, width, precision);
     }
     case 'A': {
-        long double d = read_double(args, length);
+        long double d = *(long double*)args_read(args, 0);
         flags |= F_UPPERCASE;
         return print_exponential(d, 2, flags, width, precision);
     }
     case 'C':
-        length |= L_LONG;
-        // fall through
     case 'c': {
-        char s[MB_CUR_MAX];
-        size_t n = read_char(args, length, s);
-        if (n == (size_t)-1) {
-            return -1;
-        }
-        return write(STDOUT_FILENO, s, n);
+        char* s = *(char**)args_read(args, 0);
+        ssize_t b = write(STDOUT_FILENO, s, MB_CUR_MAX);
+        free(s);
+        return b;
     }
     case 'S':
-        length |= L_LONG;
-        // fall through
     case 's': {
-        char* s = read_string(args, length);
+        char* s = *(char**)args_read(args, 0);
         if (s == NULL) {
             return -1;
         }
         size_t n = strlen(s);
         ssize_t b = write(STDOUT_FILENO, s, n);
-        if (length & L_LONG) {
+        // TODO: free memory allocated by wchar* conversion
+        if (false) {
             free(s);
         }
         return b;
@@ -276,17 +195,23 @@ int arg_parse(const char* restrict* fmt, va_list* args, Flags flags) {
 }
 
 int r_printf(const char* restrict fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
+    va_list vargs;
+    va_start(vargs, fmt);
+    Args* args = args_init(fmt, &vargs);
+    if (args == NULL) {
+        return -1;
+    }
     int i = 0, b = 0;
     while (fmt[i] != '\0') {
         if (fmt[i] == '%') {
             // arg parse
             if ((b = add_or_error(write(STDOUT_FILENO, fmt, i), b)) < 0) {
+                args_end(args);
                 return -1;
             }
             fmt += i;
-            if ((b = add_or_error(arg_parse(&fmt, &args, 0), b)) < 0) {
+            if ((b = add_or_error(arg_parse(&fmt, args, 0), b)) < 0) {
+                args_end(args);
                 return -1;
             }
             i = 0;
@@ -295,8 +220,9 @@ int r_printf(const char* restrict fmt, ...) {
         }
     }
     if ((b = add_or_error(write(STDOUT_FILENO, fmt, i), b)) < 0) {
+        args_end(args);
         return -1;
     }
-    va_end(args);
+    args_end(args);
     return b;
 }
