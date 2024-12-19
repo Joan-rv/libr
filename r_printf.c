@@ -140,10 +140,7 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
         }
         size_t n = strlen(s);
         ssize_t b = write(STDOUT_FILENO, s, n);
-        // TODO: free memory allocated by wchar* conversion
-        if (false) {
-            free(s);
-        }
+        free(s);
         return b;
     }
     case 'm': {

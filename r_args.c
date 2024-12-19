@@ -123,7 +123,13 @@ char* read_string(va_list* vargs, Length length) {
         wcstombs(s, ws, l + 1);
         return s;
     } else {
-        return (char*)va_arg(*vargs, char*);
+        char* s_arg = va_arg(*vargs, char*);
+        char* s = malloc((strlen(s_arg) + 1) * sizeof(char));
+        if (s == NULL) {
+            return NULL;
+        }
+        strcpy(s, s_arg);
+        return s;
     }
 }
 
