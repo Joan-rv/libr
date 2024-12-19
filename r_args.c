@@ -12,6 +12,45 @@ struct Args {
     int arg_pos;
 };
 
+Length read_length_modifier(const char* restrict* fmt) {
+    Length length = 0;
+    while (true) {
+        switch (**fmt) {
+        case 'h':
+            if (length & L_SHORT) {
+                length |= L_CHAR;
+            } else {
+                length |= L_SHORT;
+            }
+            break;
+        case 'l':
+            if (length & L_LONG) {
+                length |= L_LONGLONG;
+            } else {
+                length |= L_LONG;
+            }
+            break;
+        case 'q':
+        case 'L':
+            length |= L_LONGLONG;
+            break;
+        case 'j':
+            length |= L_INTMAX;
+            break;
+        case 'Z':
+        case 'z':
+            length |= L_SIZET;
+            break;
+        case 't':
+            length |= L_PTRDIFF;
+            break;
+        default:
+            return length;
+        }
+        (*fmt)++;
+    }
+}
+
 intmax_t read_signed(va_list* vargs, Length length) {
     if (length & L_CHAR) {
         return (char)va_arg(*vargs, int);
@@ -95,9 +134,7 @@ void* read_arg(const char* restrict* fmt, va_list* vargs) {
            **fmt == '+') {
         (*fmt)++;
     }
-    (*fmt)--;
     Length length = read_length_modifier(fmt);
-    (*fmt)++;
     switch (**fmt) {
     case 'd':
     case 'i': {

@@ -19,45 +19,6 @@ int add_or_error(ssize_t r, int b) {
     return r + b;
 }
 
-Length read_length_modifier(const char* restrict* fmt) {
-    Length length = 0;
-    while (true) {
-        switch ((*fmt)[1]) {
-        case 'h':
-            if (length & L_SHORT) {
-                length |= L_CHAR;
-            } else {
-                length |= L_SHORT;
-            }
-            break;
-        case 'l':
-            if (length & L_LONG) {
-                length |= L_LONGLONG;
-            } else {
-                length |= L_LONG;
-            }
-            break;
-        case 'q':
-        case 'L':
-            length |= L_LONGLONG;
-            break;
-        case 'j':
-            length |= L_INTMAX;
-            break;
-        case 'Z':
-        case 'z':
-            length |= L_SIZET;
-            break;
-        case 't':
-            length |= L_PTRDIFF;
-            break;
-        default:
-            return length;
-        }
-        (*fmt)++;
-    }
-}
-
 int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
     // read flags
     switch ((*fmt)[1]) {
@@ -101,7 +62,12 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
         }
     }
 
-    read_length_modifier(fmt);
+    // ignore length modifier (read in args_init)
+    while ((*fmt)[1] == 'h' || (*fmt)[1] == 'l' || (*fmt)[1] == 'q' ||
+           (*fmt)[1] == 'L' || (*fmt)[1] == 'l' || (*fmt)[1] == 'j' ||
+           (*fmt)[1] == 'Z' || (*fmt)[1] == 'z' || (*fmt)[1] == 't') {
+        (*fmt)++;
+    }
 
     // read conversion
     *fmt += 2;

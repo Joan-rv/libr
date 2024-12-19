@@ -27,7 +27,6 @@ Args* args_init(const char* restrict fmt, va_list* vargs);
 void args_end(Args* args);
 void* args_read(Args* args, int pos);
 
-Length read_length_modifier(const char* restrict* fmt);
 int add_or_error(ssize_t r, int b);
 int print_unsigned(uintmax_t n, unsigned int base, Flags flags, int width,
                    int precision);
