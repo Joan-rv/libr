@@ -1,4 +1,5 @@
 #include <math.h>
+#include <r_fmtprint.h>
 #include <r_printf.h>
 #include <stdbool.h>
 #include <stdio.h>
