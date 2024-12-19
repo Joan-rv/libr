@@ -1,3 +1,5 @@
+#ifndef R_PRINTF_H
+#define R_PRINTF_H
 #include <sys/types.h>
 
 typedef enum {
@@ -20,3 +22,4 @@ typedef enum {
 } Length;
 
 int add_or_error(ssize_t r, int b);
+#endif
