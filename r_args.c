@@ -109,6 +109,7 @@ String* read_char(va_list* vargs, Length length) {
     if (length & L_LONG) {
         s->chars = malloc(MB_CUR_MAX * sizeof(char));
         if (s->chars == NULL) {
+            free(s);
             return NULL;
         }
         wint_t c = va_arg(*vargs, wint_t);
@@ -121,6 +122,7 @@ String* read_char(va_list* vargs, Length length) {
     } else {
         s->chars = malloc(sizeof(char));
         if (s->chars == NULL) {
+            free(s);
             return NULL;
         }
         s->chars[0] = (char)va_arg(*vargs, int);
@@ -142,17 +144,16 @@ String* read_string(va_list* vargs, Length length) {
         }
         s->chars = malloc(s->size + 1);
         if (s->chars == NULL) {
+            free(s);
             return NULL;
         }
         wcstombs(s->chars, ws, s->size + 1);
     } else {
         char* s_arg = va_arg(*vargs, char*);
-        if (s == NULL) {
-            return NULL;
-        }
         s->size = strlen(s_arg);
         s->chars = malloc((s->size + 1) * sizeof(char));
         if (s->chars == NULL) {
+            free(s);
             return NULL;
         }
         strcpy(s->chars, s_arg);
