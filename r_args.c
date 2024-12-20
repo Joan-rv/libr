@@ -247,11 +247,11 @@ bool read_arg(Args* args, const char* restrict* fmt, va_list* vargs) {
         length |= L_LONG;
         // fall through
     case 'c': {
-        args->is_string[args->size] = true;
         String* arg = read_char(vargs, length);
         if (arg == NULL) {
             return false;
         }
+        args->is_string[args->size] = true;
         args->args[args->size] = arg;
         break;
     }
@@ -259,11 +259,11 @@ bool read_arg(Args* args, const char* restrict* fmt, va_list* vargs) {
         length |= L_LONG;
         // fall through
     case 's': {
-        args->is_string[args->size] = true;
         String* arg = read_string(vargs, length);
         if (arg == NULL) {
             return false;
         }
+        args->is_string[args->size] = true;
         args->args[args->size] = arg;
         break;
     }
