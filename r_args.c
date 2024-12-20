@@ -266,5 +266,6 @@ void args_end(Args* args) {
     for (size_t i = 0; i < args->size; i++) {
         free(args->args[i]);
     }
+    free(args->args);
     free(args);
 }
