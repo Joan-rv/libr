@@ -263,9 +263,11 @@ void* args_read(Args* args, int pos) {
 
 void args_end(Args* args) {
     // TODO: memory allocated for strings is leaked, we should free it here
-    for (size_t i = 0; i < args->size; i++) {
-        free(args->args[i]);
+    if (args->args != NULL) {
+        for (size_t i = 0; i < args->size; i++) {
+            free(args->args[i]);
+        }
+        free(args->args);
     }
-    free(args->args);
     free(args);
 }
