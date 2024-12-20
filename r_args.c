@@ -161,7 +161,16 @@ String* read_string(va_list* vargs, Length length) {
     return s;
 }
 
-void* read_arg(const char* restrict* fmt, va_list* vargs, bool* is_string) {
+bool read_arg(Args* args, const char* restrict* fmt, va_list* vargs) {
+    if (!(args->args = realloc(args->args, (args->size + 1) * sizeof(void*)))) {
+        args_end(args);
+        return false;
+    }
+    if (!(args->is_string =
+              realloc(args->is_string, (args->size + 1) * sizeof(bool)))) {
+        args_end(args);
+        return false;
+    }
     (*fmt)++;
     while (('0' <= **fmt && **fmt <= '9') || **fmt == '.' || **fmt == '*' ||
            **fmt == '$' || **fmt == '#' || **fmt == '-' || **fmt == ' ' ||
@@ -173,28 +182,33 @@ void* read_arg(const char* restrict* fmt, va_list* vargs, bool* is_string) {
     case 'd':
     case 'i': {
         intmax_t* arg = malloc(sizeof(intmax_t));
-        if (arg != NULL) {
-            *arg = read_signed(vargs, length);
+        if (arg == NULL) {
+            return false;
         }
-        return arg;
+        *arg = read_signed(vargs, length);
+        args->args[args->size] = arg;
+        break;
     }
     case 'u':
     case 'o':
     case 'x':
     case 'X': {
         uintmax_t* arg = malloc(sizeof(uintmax_t));
-        if (arg != NULL) {
-
-            *arg = read_signed(vargs, length);
+        if (arg == NULL) {
+            return false;
         }
-        return arg;
+        *arg = read_signed(vargs, length);
+        args->args[args->size] = arg;
+        break;
     }
     case 'p': {
         void** arg = malloc(sizeof(void*));
-        if (arg != NULL) {
-            *arg = va_arg(*vargs, void*);
+        if (arg == NULL) {
+            return false;
         }
-        return arg;
+        *arg = va_arg(*vargs, void*);
+        args->args[args->size] = arg;
+        break;
     }
     case 'f':
     case 'F':
@@ -203,28 +217,42 @@ void* read_arg(const char* restrict* fmt, va_list* vargs, bool* is_string) {
     case 'a':
     case 'A': {
         long double* arg = malloc(sizeof(long double));
-        if (arg != NULL) {
-            *arg = read_double(vargs, length);
+        if (arg == NULL) {
+            return false;
         }
-        return arg;
+        *arg = read_double(vargs, length);
+        args->args[args->size] = arg;
+        break;
     }
     case 'C':
         length |= L_LONG;
         // fall through
     case 'c': {
-        *is_string = true;
-        return read_char(vargs, length);
+        args->is_string[args->size] = true;
+        String* arg = read_char(vargs, length);
+        if (arg == NULL) {
+            return false;
+        }
+        args->args[args->size] = arg;
+        break;
     }
     case 'S':
         length |= L_LONG;
         // fall through
     case 's': {
-        *is_string = true;
-        return read_string(vargs, length);
+        args->is_string[args->size] = true;
+        String* arg = read_string(vargs, length);
+        if (arg == NULL) {
+            return false;
+        }
+        args->args[args->size] = arg;
+        break;
     }
     default:
-        return NULL;
+        return false;
     }
+    args->size++;
+    return true;
 }
 
 Args* args_init(const char* restrict fmt, va_list* vargs) {
@@ -239,22 +267,10 @@ Args* args_init(const char* restrict fmt, va_list* vargs) {
     while (*fmt != '\0') {
         if (*fmt == '%') {
             if (fmt[1] != '%' && fmt[1] != 'm') {
-                if (!(args->args = realloc(args->args,
-                                           (args->size + 1) * sizeof(void*)))) {
+                if (!read_arg(args, &fmt, vargs)) {
                     args_end(args);
                     return NULL;
                 }
-                if (!(args->is_string = realloc(
-                          args->is_string, (args->size + 1) * sizeof(bool)))) {
-                    args_end(args);
-                    return NULL;
-                }
-                if (!(args->args[args->size] = read_arg(
-                          &fmt, vargs, args->is_string + args->size))) {
-                    args_end(args);
-                    return NULL;
-                }
-                args->size += 1;
             } else {
                 fmt++;
             }
