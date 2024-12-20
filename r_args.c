@@ -128,28 +128,35 @@ String* read_char(va_list* vargs, Length length) {
     return s;
 }
 
-char* read_string(va_list* vargs, Length length) {
+String* read_string(va_list* vargs, Length length) {
+    String* s = malloc(sizeof(String));
+    if (s == NULL) {
+        return NULL;
+    }
     if (length & L_LONG) {
         wchar_t* ws = va_arg(*vargs, wchar_t*);
-        size_t l = wcstombs(NULL, ws, 0);
-        if (l == (size_t)-1) {
+        s->size = wcstombs(NULL, ws, 0);
+        if (s->size == (size_t)-1) {
             return NULL;
         }
-        char* s = malloc(l + 1);
-        if (s == NULL) {
+        s->chars = malloc(s->size + 1);
+        if (s->chars == NULL) {
             return NULL;
         }
-        wcstombs(s, ws, l + 1);
-        return s;
+        wcstombs(s->chars, ws, s->size + 1);
     } else {
         char* s_arg = va_arg(*vargs, char*);
-        char* s = malloc((strlen(s_arg) + 1) * sizeof(char));
         if (s == NULL) {
             return NULL;
         }
-        strcpy(s, s_arg);
-        return s;
+        s->size = strlen(s_arg);
+        s->chars = malloc((s->size + 1) * sizeof(char));
+        if (s->chars == NULL) {
+            return NULL;
+        }
+        strcpy(s->chars, s_arg);
     }
+    return s;
 }
 
 void* read_arg(const char* restrict* fmt, va_list* vargs) {
@@ -213,13 +220,7 @@ void* read_arg(const char* restrict* fmt, va_list* vargs) {
         length |= L_LONG;
         // fall through
     case 's': {
-        String* arg = malloc(sizeof(String));
-        if (arg != NULL) {
-            arg->chars = read_string(vargs, length);
-            if (arg->chars == NULL) {
-                return NULL;
-            }
-        }
+        String* arg = read_string(vargs, length);
         return arg;
     }
     default:
