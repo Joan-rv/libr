@@ -131,14 +131,12 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
     case 'c': {
         String* s = (String*)args_read(args, 0);
         ssize_t b = write(STDOUT_FILENO, s->chars, s->size);
-        free(s->chars);
         return b;
     }
     case 'S':
     case 's': {
         String* s = (String*)args_read(args, 0);
         ssize_t b = write(STDOUT_FILENO, s->chars, s->size);
-        free(s->chars);
         return b;
     }
     case 'm': {

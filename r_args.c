@@ -11,6 +11,7 @@
 
 struct Args {
     void** args;
+    bool* is_string;
     size_t size;
     int arg_pos;
 };
@@ -159,7 +160,7 @@ String* read_string(va_list* vargs, Length length) {
     return s;
 }
 
-void* read_arg(const char* restrict* fmt, va_list* vargs) {
+void* read_arg(const char* restrict* fmt, va_list* vargs, bool* is_string) {
     (*fmt)++;
     while (('0' <= **fmt && **fmt <= '9') || **fmt == '.' || **fmt == '*' ||
            **fmt == '$' || **fmt == '#' || **fmt == '-' || **fmt == ' ' ||
@@ -210,12 +211,14 @@ void* read_arg(const char* restrict* fmt, va_list* vargs) {
         length |= L_LONG;
         // fall through
     case 'c': {
+        *is_string = true;
         return read_char(vargs, length);
     }
     case 'S':
         length |= L_LONG;
         // fall through
     case 's': {
+        *is_string = true;
         return read_string(vargs, length);
     }
     default:
@@ -229,6 +232,7 @@ Args* args_init(const char* restrict fmt, va_list* vargs) {
         return NULL;
     }
     args->args = NULL;
+    args->is_string = NULL;
     args->size = 0;
     args->arg_pos = 0;
     while (*fmt != '\0') {
@@ -239,7 +243,13 @@ Args* args_init(const char* restrict fmt, va_list* vargs) {
                     args_end(args);
                     return NULL;
                 }
-                if (!(args->args[args->size] = read_arg(&fmt, vargs))) {
+                if (!(args->is_string = realloc(
+                          args->is_string, (args->size + 1) * sizeof(bool)))) {
+                    args_end(args);
+                    return NULL;
+                }
+                if (!(args->args[args->size] = read_arg(
+                          &fmt, vargs, args->is_string + args->size))) {
                     args_end(args);
                     return NULL;
                 }
@@ -262,12 +272,19 @@ void* args_read(Args* args, int pos) {
 }
 
 void args_end(Args* args) {
-    // TODO: memory allocated for strings is leaked, we should free it here
     if (args->args != NULL) {
         for (size_t i = 0; i < args->size; i++) {
+            if (args->is_string != NULL) {
+                if (args->is_string[i]) {
+                    free(((String*)args->args[i])->chars);
+                }
+            }
             free(args->args[i]);
         }
         free(args->args);
+    }
+    if (args->is_string != NULL) {
+        free(args->is_string);
     }
     free(args);
 }
