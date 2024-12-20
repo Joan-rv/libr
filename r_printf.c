@@ -137,8 +137,7 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
     case 'S':
     case 's': {
         String* s = (String*)args_read(args, 0);
-        size_t n = strlen(s->chars);
-        ssize_t b = write(STDOUT_FILENO, s->chars, n);
+        ssize_t b = write(STDOUT_FILENO, s->chars, s->size);
         free(s->chars);
         return b;
     }
