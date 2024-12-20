@@ -161,20 +161,39 @@ String* read_string(va_list* vargs, Length length) {
     return s;
 }
 
-bool read_arg(Args* args, const char* restrict* fmt, va_list* vargs) {
-    if (!(args->args = realloc(args->args, (args->size + 1) * sizeof(void*)))) {
+bool resize_args(Args* args, size_t size) {
+    if (!(args->args = realloc(args->args, size * sizeof(void*)))) {
         args_end(args);
         return false;
     }
-    if (!(args->is_string =
-              realloc(args->is_string, (args->size + 1) * sizeof(bool)))) {
+    if (!(args->is_string = realloc(args->is_string, size * sizeof(bool)))) {
         args_end(args);
+        return false;
+    }
+    args->is_string[args->size] = false;
+    return true;
+}
+
+bool read_arg(Args* args, const char* restrict* fmt, va_list* vargs) {
+    if (!resize_args(args, args->size + 1)) {
         return false;
     }
     (*fmt)++;
     while (('0' <= **fmt && **fmt <= '9') || **fmt == '.' || **fmt == '*' ||
            **fmt == '$' || **fmt == '#' || **fmt == '-' || **fmt == ' ' ||
            **fmt == '+') {
+        if (**fmt == '*') {
+            int* arg = malloc(sizeof(int));
+            if (arg == NULL) {
+                return false;
+            }
+            *arg = (int)read_signed(vargs, 0);
+            args->args[args->size] = arg;
+            args->size++;
+            if (!resize_args(args, args->size + 1)) {
+                return false;
+            }
+        }
         (*fmt)++;
     }
     Length length = read_length_modifier(fmt);

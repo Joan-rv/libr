@@ -52,6 +52,10 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
         width = width * 10 + (*fmt)[1] - '0';
         *fmt += 1;
     }
+    if ((*fmt)[1] == '*') {
+        width = *(int*)args_read(args, 0);
+        (*fmt)++;
+    }
 
     // read precision
     int precision = -1;
@@ -61,6 +65,10 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
         while ('0' <= (*fmt)[1] && (*fmt)[1] <= '9') {
             precision = precision * 10 + (*fmt)[1] - '0';
             *fmt += 1;
+        }
+        if ((*fmt)[1] == '*') {
+            precision = *(int*)args_read(args, 0);
+            (*fmt)++;
         }
     }
 

@@ -19,8 +19,8 @@ int main() {
                     22.2l, 22.2f, 22.2f, 22.2f, 0.02f, 0.02f, 0.02f, -INFINITY,
                     -NAN, "hello", L"こんにちは日本!");
     printf("r1=%d, r2=%d\n", r1, r2);
-    // r1 = r_printf("%*.*f\n", 10, 1, 0.2f);
-    r2 = printf("%*.*f\n", 10, 1, 0.2f);
+    r1 = r_printf("%*.*f\n", 5, 1, 0.2f);
+    r2 = printf("%*.*f\n", 5, 1, 0.2f);
     printf("r1=%d, r2=%d\n", r1, r2);
     r_printf("%s, %werror", "This used to leak memory");
     printf("r_abs(-36)=%d\n", r_abs(-36));
