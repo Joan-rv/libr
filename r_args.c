@@ -210,15 +210,13 @@ void* read_arg(const char* restrict* fmt, va_list* vargs) {
         length |= L_LONG;
         // fall through
     case 'c': {
-        String* arg = read_char(vargs, length);
-        return arg;
+        return read_char(vargs, length);
     }
     case 'S':
         length |= L_LONG;
         // fall through
     case 's': {
-        String* arg = read_string(vargs, length);
-        return arg;
+        return read_string(vargs, length);
     }
     default:
         return NULL;
@@ -264,6 +262,7 @@ void* args_read(Args* args, int pos) {
 }
 
 void args_end(Args* args) {
+    // TODO: memory allocated for strings is leaked, we should free it here
     for (size_t i = 0; i < args->size; i++) {
         free(args->args[i]);
     }
