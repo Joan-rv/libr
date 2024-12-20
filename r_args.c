@@ -187,14 +187,14 @@ void* read_arg(const char* restrict* fmt, va_list* vargs) {
         length |= L_LONG;
         // fall through
     case 'c': {
-        char** arg = malloc(sizeof(char*));
+        String* arg = malloc(sizeof(String));
         if (arg != NULL) {
-            *arg = malloc(MB_CUR_MAX * sizeof(char));
-            if (*arg == NULL) {
+            arg->chars = malloc(MB_CUR_MAX * sizeof(char));
+            if (arg->chars == NULL) {
                 return NULL;
             }
-            size_t n = read_char(vargs, length, *arg);
-            if (n == (size_t)-1) {
+            arg->size = read_char(vargs, length, arg->chars);
+            if (arg->size == (size_t)-1) {
                 return NULL;
             }
         }
@@ -204,10 +204,10 @@ void* read_arg(const char* restrict* fmt, va_list* vargs) {
         length |= L_LONG;
         // fall through
     case 's': {
-        char** arg = malloc(sizeof(char*));
+        String* arg = malloc(sizeof(String));
         if (arg != NULL) {
-            *arg = read_string(vargs, length);
-            if (*arg == NULL) {
+            arg->chars = read_string(vargs, length);
+            if (arg->chars == NULL) {
                 return NULL;
             }
         }

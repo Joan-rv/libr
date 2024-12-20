@@ -129,20 +129,17 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
     }
     case 'C':
     case 'c': {
-        char* s = *(char**)args_read(args, 0);
-        ssize_t b = write(STDOUT_FILENO, s, MB_CUR_MAX);
-        free(s);
+        String* s = (String*)args_read(args, 0);
+        ssize_t b = write(STDOUT_FILENO, s->chars, s->size);
+        free(s->chars);
         return b;
     }
     case 'S':
     case 's': {
-        char* s = *(char**)args_read(args, 0);
-        if (s == NULL) {
-            return -1;
-        }
-        size_t n = strlen(s);
-        ssize_t b = write(STDOUT_FILENO, s, n);
-        free(s);
+        String* s = (String*)args_read(args, 0);
+        size_t n = strlen(s->chars);
+        ssize_t b = write(STDOUT_FILENO, s->chars, n);
+        free(s->chars);
         return b;
     }
     case 'm': {
