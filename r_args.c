@@ -100,16 +100,32 @@ long double read_double(va_list* vargs, Length length) {
     }
 }
 
-size_t read_char(va_list* vargs, Length length, char out[]) {
+String* read_char(va_list* vargs, Length length) {
+    String* s = malloc(sizeof(String));
+    if (s == NULL) {
+        return NULL;
+    }
     if (length & L_LONG) {
+        s->chars = malloc(MB_CUR_MAX * sizeof(char));
+        if (s->chars == NULL) {
+            return NULL;
+        }
         wint_t c = va_arg(*vargs, wint_t);
         mbstate_t state;
         memset(&state, 0, sizeof(state));
-        return wcrtomb(out, c, &state);
+        s->size = wcrtomb(s->chars, c, &state);
+        if (s->size == (size_t)-1) {
+            return NULL;
+        }
     } else {
-        out[0] = (char)va_arg(*vargs, int);
-        return 1;
+        s->chars = malloc(sizeof(char));
+        if (s->chars == NULL) {
+            return NULL;
+        }
+        s->chars[0] = (char)va_arg(*vargs, int);
+        s->size = 1;
     }
+    return s;
 }
 
 char* read_string(va_list* vargs, Length length) {
@@ -187,16 +203,9 @@ void* read_arg(const char* restrict* fmt, va_list* vargs) {
         length |= L_LONG;
         // fall through
     case 'c': {
-        String* arg = malloc(sizeof(String));
-        if (arg != NULL) {
-            arg->chars = malloc(MB_CUR_MAX * sizeof(char));
-            if (arg->chars == NULL) {
-                return NULL;
-            }
-            arg->size = read_char(vargs, length, arg->chars);
-            if (arg->size == (size_t)-1) {
-                return NULL;
-            }
+        String* arg = read_char(vargs, length);
+        if (arg == NULL) {
+            return NULL;
         }
         return arg;
     }
