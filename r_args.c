@@ -211,9 +211,6 @@ void* read_arg(const char* restrict* fmt, va_list* vargs) {
         // fall through
     case 'c': {
         String* arg = read_char(vargs, length);
-        if (arg == NULL) {
-            return NULL;
-        }
         return arg;
     }
     case 'S':
