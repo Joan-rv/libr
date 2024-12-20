@@ -19,6 +19,9 @@ int main() {
                     22.2l, 22.2f, 22.2f, 22.2f, 0.02f, 0.02f, 0.02f, -INFINITY,
                     -NAN, "hello", L"こんにちは日本!");
     printf("r1=%d, r2=%d\n", r1, r2);
+    r1 = r_printf("%werror\n");
+    r2 = r_printf("%werror\n");
+    printf("r1=%d, r2=%d\n", r1, r2);
     printf("r_abs(-36)=%d\n", r_abs(-36));
     printf("r_gcd(4, -36)=%d\n", r_gcd(4, -36));
     printf("r_lcm(4, -36)=%d\n", r_lcm(4, -36));
