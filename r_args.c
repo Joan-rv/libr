@@ -174,15 +174,40 @@ bool resize_args(Args* args, size_t size) {
     return true;
 }
 
-bool read_arg(Args* args, const char* restrict* fmt, va_list* vargs) {
+bool read_arg(Args* args, const char* restrict* fmt_orig, va_list* vargs) {
+    const char* restrict fmt = *fmt_orig;
+    fmt++;
+    bool correct_position = false;
+    bool implicit_position = false;
+    while (!correct_position) {
+        unsigned int num = 0;
+        while ('0' <= *fmt && *fmt <= '9') {
+            num = num * 10 + *fmt - '0';
+            fmt++;
+        }
+        if (*fmt != '$' || args->size + 1 == num) {
+            if (*fmt != '$') {
+                implicit_position = true;
+            }
+            correct_position = true;
+        } else {
+            while (*fmt != '%' && *fmt != '\0') {
+                fmt++;
+            }
+            if (*fmt == '\0') {
+                *fmt_orig = fmt;
+                return true;
+            }
+            fmt++;
+        }
+    }
     if (!resize_args(args, args->size + 1)) {
         return false;
     }
-    (*fmt)++;
-    while (('0' <= **fmt && **fmt <= '9') || **fmt == '.' || **fmt == '*' ||
-           **fmt == '$' || **fmt == '#' || **fmt == '-' || **fmt == ' ' ||
-           **fmt == '+') {
-        if (**fmt == '*') {
+    while (('0' <= *fmt && *fmt <= '9') || *fmt == '.' || *fmt == '*' ||
+           *fmt == '$' || *fmt == '#' || *fmt == '-' || *fmt == ' ' ||
+           *fmt == '+') {
+        if (*fmt == '*') {
             int* arg = malloc(sizeof(int));
             if (arg == NULL) {
                 return false;
@@ -194,10 +219,10 @@ bool read_arg(Args* args, const char* restrict* fmt, va_list* vargs) {
                 return false;
             }
         }
-        (*fmt)++;
+        fmt++;
     }
-    Length length = read_length_modifier(fmt);
-    switch (**fmt) {
+    Length length = read_length_modifier(&fmt);
+    switch (*fmt) {
     case 'd':
     case 'i': {
         intmax_t* arg = malloc(sizeof(intmax_t));
@@ -271,6 +296,9 @@ bool read_arg(Args* args, const char* restrict* fmt, va_list* vargs) {
         return false;
     }
     args->size++;
+    if (implicit_position) {
+        *fmt_orig = fmt;
+    }
     return true;
 }
 
@@ -291,10 +319,11 @@ Args* args_init(const char* restrict fmt, va_list* vargs) {
                     return NULL;
                 }
             } else {
-                fmt++;
+                fmt += 2;
             }
+        } else {
+            fmt++;
         }
-        fmt++;
     }
     va_end(*vargs);
     return args;
@@ -303,6 +332,8 @@ Args* args_init(const char* restrict fmt, va_list* vargs) {
 void* args_read(Args* args, int pos) {
     if (pos == 0) {
         args->arg_pos++;
+    } else {
+        args->arg_pos = pos;
     }
     return args->args[args->arg_pos - 1];
 }

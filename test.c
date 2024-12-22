@@ -22,6 +22,9 @@ int main() {
     r1 = r_printf("%*.*f\n", 5, 1, 0.2f);
     r2 = printf("%*.*f\n", 5, 1, 0.2f);
     printf("r1=%d, r2=%d\n", r1, r2);
+    r1 = r_printf("%2$f, %3$s, %1$d\n", 2, 0.2f, "hello");
+    r2 = printf("%2$f, %3$s, %1$d\n", 2, 0.2f, "hello");
+    printf("r1=%d, r2=%d\n", r1, r2);
     r_printf("%s, %werror", "This used to leak memory");
     printf("r_abs(-36)=%d\n", r_abs(-36));
     printf("r_gcd(4, -36)=%d\n", r_gcd(4, -36));

@@ -22,6 +22,19 @@ int add_or_error(ssize_t r, int b) {
 }
 
 int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
+    // skip positional argument
+    const char* restrict fmt_skip = *fmt;
+    int pos = 0;
+    while ('0' <= fmt_skip[1] && fmt_skip[1] <= '9') {
+        pos = pos * 10 + fmt_skip[1] - '0';
+        fmt_skip++;
+    }
+    if (fmt_skip[1] == '$') {
+        fmt_skip++;
+        *fmt = fmt_skip;
+    } else {
+        pos = 0;
+    }
     // read flags
     switch ((*fmt)[1]) {
     case ' ':
@@ -84,66 +97,66 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
     switch ((*fmt)[-1]) {
     case 'd':
     case 'i': {
-        intmax_t i = *(intmax_t*)args_read(args, 0);
+        intmax_t i = *(intmax_t*)args_read(args, pos);
         return print_signed(i, 10, flags, width, precision);
     }
     case 'u': {
-        uintmax_t i = *(uintmax_t*)args_read(args, 0);
+        uintmax_t i = *(uintmax_t*)args_read(args, pos);
         return print_unsigned(i, 10, flags, width, precision);
     }
     case 'o': {
-        uintmax_t i = *(uintmax_t*)args_read(args, 0);
+        uintmax_t i = *(uintmax_t*)args_read(args, pos);
         return print_unsigned(i, 8, flags, width, precision);
     }
     case 'x': {
-        uintmax_t i = *(uintmax_t*)args_read(args, 0);
+        uintmax_t i = *(uintmax_t*)args_read(args, pos);
         return print_unsigned(i, 16, flags, width, precision);
     }
     case 'X': {
-        uintmax_t i = *(uintmax_t*)args_read(args, 0);
+        uintmax_t i = *(uintmax_t*)args_read(args, pos);
         flags |= F_UPPERCASE;
         return print_unsigned(i, 16, flags, width, precision);
     }
     case 'p': {
-        void* p = *(void**)args_read(args, 0);
+        void* p = *(void**)args_read(args, pos);
         return print_pointer(p, flags, width);
     }
     case 'f': {
-        long double d = *(long double*)args_read(args, 0);
+        long double d = *(long double*)args_read(args, pos);
         return print_decimal(d, 10, flags, width, precision);
     }
     case 'F': {
-        long double d = *(long double*)args_read(args, 0);
+        long double d = *(long double*)args_read(args, pos);
         flags |= F_UPPERCASE;
         return print_decimal(d, 10, flags, width, precision);
     }
     case 'e': {
-        long double d = *(long double*)args_read(args, 0);
+        long double d = *(long double*)args_read(args, pos);
         return print_exponential(d, 10, flags, width, precision);
     }
     case 'E': {
-        long double d = *(long double*)args_read(args, 0);
+        long double d = *(long double*)args_read(args, pos);
         flags |= F_UPPERCASE;
         return print_exponential(d, 10, flags, width, precision);
     }
     case 'a': {
-        long double d = *(long double*)args_read(args, 0);
+        long double d = *(long double*)args_read(args, pos);
         return print_exponential(d, 2, flags, width, precision);
     }
     case 'A': {
-        long double d = *(long double*)args_read(args, 0);
+        long double d = *(long double*)args_read(args, pos);
         flags |= F_UPPERCASE;
         return print_exponential(d, 2, flags, width, precision);
     }
     case 'C':
     case 'c': {
-        String* s = (String*)args_read(args, 0);
+        String* s = (String*)args_read(args, pos);
         ssize_t b = write(STDOUT_FILENO, s->chars, s->size);
         return b;
     }
     case 'S':
     case 's': {
-        String* s = (String*)args_read(args, 0);
+        String* s = (String*)args_read(args, pos);
         ssize_t b = write(STDOUT_FILENO, s->chars, s->size);
         return b;
     }
