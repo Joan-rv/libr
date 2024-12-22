@@ -66,8 +66,20 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
         *fmt += 1;
     }
     if ((*fmt)[1] == '*') {
-        width = *(int*)args_read(args, 0);
         (*fmt)++;
+        const char* restrict fmt_skip = *fmt;
+        int width_pos = 0;
+        while ('0' <= fmt_skip[1] && fmt_skip[1] <= '9') {
+            width_pos = width_pos * 10 + fmt_skip[1] - '0';
+            fmt_skip++;
+        }
+        if (fmt_skip[1] == '$') {
+            fmt_skip++;
+            *fmt = fmt_skip;
+        } else {
+            width_pos = 0;
+        }
+        width = *(int*)args_read(args, width_pos);
     }
 
     // read precision
@@ -80,8 +92,20 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
             *fmt += 1;
         }
         if ((*fmt)[1] == '*') {
-            precision = *(int*)args_read(args, 0);
             (*fmt)++;
+            const char* restrict fmt_skip = *fmt;
+            int precision_pos = 0;
+            while ('0' <= fmt_skip[1] && fmt_skip[1] <= '9') {
+                precision_pos = precision_pos * 10 + fmt_skip[1] - '0';
+                fmt_skip++;
+            }
+            if (fmt_skip[1] == '$') {
+                fmt_skip++;
+                *fmt = fmt_skip;
+            } else {
+                precision_pos = 0;
+            }
+            precision = *(int*)args_read(args, precision_pos);
         }
     }
 

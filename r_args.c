@@ -179,6 +179,7 @@ bool read_arg(Args* args, const char* restrict* fmt_orig, va_list* vargs) {
     fmt++;
     bool correct_position = false;
     bool implicit_position = false;
+    bool read_widthprec = false;
     while (!correct_position) {
         unsigned int num = 0;
         while ('0' <= *fmt && *fmt <= '9') {
@@ -191,12 +192,16 @@ bool read_arg(Args* args, const char* restrict* fmt_orig, va_list* vargs) {
             }
             correct_position = true;
         } else {
-            while (*fmt != '%' && *fmt != '\0') {
+            read_widthprec = false;
+            while (*fmt != '%' && *fmt != '\0' && *fmt != '*') {
                 fmt++;
             }
             if (*fmt == '\0') {
                 *fmt_orig = fmt;
                 return true;
+            }
+            if (*fmt == '*') {
+                read_widthprec = true;
             }
             fmt++;
         }
@@ -207,7 +212,7 @@ bool read_arg(Args* args, const char* restrict* fmt_orig, va_list* vargs) {
     while (('0' <= *fmt && *fmt <= '9') || *fmt == '.' || *fmt == '*' ||
            *fmt == '$' || *fmt == '#' || *fmt == '-' || *fmt == ' ' ||
            *fmt == '+') {
-        if (*fmt == '*') {
+        if ((*fmt == '*' && implicit_position) || read_widthprec) {
             int* arg = malloc(sizeof(int));
             if (arg == NULL) {
                 return false;
@@ -215,6 +220,9 @@ bool read_arg(Args* args, const char* restrict* fmt_orig, va_list* vargs) {
             *arg = (int)read_signed(vargs, 0);
             args->args[args->size] = arg;
             args->size++;
+            if (read_widthprec) {
+                return true;
+            }
             if (!resize_args(args, args->size + 1)) {
                 return false;
             }
