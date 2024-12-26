@@ -9,5 +9,5 @@ To test the library run:
 ```
 ./test
 ```
-Both lines of output should be equal. Currently the only function implemented is ```r_printf```, an implementation of ```printf```.
+Both lines of output should be equal. Currently the only functions implemented are ```r_printf```, ```r_abs```, ```r_gcd``` and ```r_lcm```.
 
