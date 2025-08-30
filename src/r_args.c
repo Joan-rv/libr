@@ -90,7 +90,7 @@ uintmax_t read_unsigned(va_list* vargs, Length length) {
     } else if (length & L_PTRDIFF) {
         return (ptrdiff_t)va_arg(*vargs, ptrdiff_t);
     } else {
-        return (unsigned int)va_arg(*vargs, int);
+        return (unsigned int)va_arg(*vargs, unsigned int);
     }
 }
 
@@ -250,7 +250,7 @@ bool read_arg(Args* args, const char* restrict* fmt_orig, va_list* vargs) {
         if (arg == NULL) {
             return false;
         }
-        *arg = read_signed(vargs, length);
+        *arg = read_unsigned(vargs, length);
         args->args[args->size] = arg;
         break;
     }
