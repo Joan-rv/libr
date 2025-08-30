@@ -3,7 +3,7 @@ STATIC=$(NAME).a
 DYNAMIC=$(NAME).so
 
 CC?=gcc
-CFLAGS?=-Wall -Wextra -Werror -g3
+CFLAGS?=-Wall -Wextra -pedantic -g3 -std=c99
 CFLAGS+=-Iinclude
 LD?=$(CC)
 LDFLAGS?=-lm
