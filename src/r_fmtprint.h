@@ -1,6 +1,8 @@
 #ifndef R_FMTPRINT_H
 #define R_FMTPRINT_H
-#include <r_printf.h>
+
+#include "r_printf.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -13,4 +15,5 @@ int print_decimal(long double n, int base, Flags flags, int width,
                   int precision);
 int print_exponential(long double n, int base, Flags flags, int width,
                       int precision);
+
 #endif

@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <rstd.h>
 
 int r_abs(int n) {
     if (n > 0) {
@@ -11,7 +11,7 @@ int r_abs(int n) {
 // Use Euclid's algorithm to find the gcd
 int r_gcd(int a, int b) {
     if (a == 0) {
-        return abs(b);
+        return r_abs(b);
     } else {
         return r_gcd(b % a, a);
     }

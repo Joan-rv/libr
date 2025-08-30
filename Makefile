@@ -1,26 +1,47 @@
-CC=gcc
-CFLAGS=-fPIC -Wall -Wextra -Werror -g -I.
+NAME=librstd
+STATIC=$(NAME).a
+DYNAMIC=$(NAME).so
+
+CC?=gcc
+CFLAGS?=-Wall -Wextra -Werror -g3
+CFLAGS+=-Iinclude
+LD?=$(CC)
+LDFLAGS?=-lm
 AR=ar
 RM=rm -f
-OBJ=r_printf.o r_fmtprint.o r_args.o r_math.o
+MKDIR=mkdir -p
 
-.PHONY: clean all
+SRCDIR=src
+OBJDIR=obj
+SRCS:=r_printf.c r_fmtprint.c r_args.c r_math.c
+SRCS:=$(SRCS:%=$(SRCDIR)/%)
+OBJS:=$(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
-all: test lib
+.PHONY: clean fclean all
 
-test: test.o libr.a
+all: test static dynamic
+
+test: obj/test.o $(NAME).a
 	$(CC) -lm $^ -o $@
 
-lib: libr.a libr.so
+static: $(NAME).a
 
-libr.a: $(OBJ)
+dynamic: $(NAME).so
+
+$(NAME).a: $(OBJS)
 	$(AR) rcs $@ $^
 
-libr.so: $(OBJ)
-	$(CC) -shared $^ -o $@
+$(NAME).so: $(OBJS)
+	$(LD) $(LDFLAGS) -shared $^ -o $@
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $^ -o $@
+$(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR):
+	$(MKDIR) $@
 
 clean:
-	$(RM) *.o *.a *.so test
+	$(RM) $(OBJS)
+
+fclean: clean
+	$(RM) $(OBJS) $(NAME).a $(NAME).so test
