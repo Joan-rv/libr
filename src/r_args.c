@@ -56,53 +56,53 @@ Length read_length_modifier(const char* restrict* fmt) {
     }
 }
 
-intmax_t read_signed(va_list* vargs, Length length) {
+intmax_t read_signed(va_list vargs, Length length) {
     if (length & L_CHAR) {
-        return (char)va_arg(*vargs, int);
+        return (char)va_arg(vargs, int);
     } else if (length & L_SHORT) {
-        return (short)va_arg(*vargs, int);
+        return (short)va_arg(vargs, int);
     } else if (length & L_LONG) {
-        return (long)va_arg(*vargs, long);
+        return (long)va_arg(vargs, long);
     } else if (length & L_LONGLONG) {
-        return (long long)va_arg(*vargs, long long);
+        return (long long)va_arg(vargs, long long);
     } else if (length & L_INTMAX) {
-        return va_arg(*vargs, intmax_t);
+        return va_arg(vargs, intmax_t);
     } else if (length & L_SIZET) {
-        return (ssize_t)va_arg(*vargs, ssize_t);
+        return (ssize_t)va_arg(vargs, ssize_t);
     } else if (length & L_PTRDIFF) {
-        return (ptrdiff_t)va_arg(*vargs, ptrdiff_t);
+        return (ptrdiff_t)va_arg(vargs, ptrdiff_t);
     } else {
-        return (int)va_arg(*vargs, int);
+        return (int)va_arg(vargs, int);
     }
 }
 
-uintmax_t read_unsigned(va_list* vargs, Length length) {
+uintmax_t read_unsigned(va_list vargs, Length length) {
     if (length & L_CHAR) {
-        return (unsigned char)va_arg(*vargs, unsigned int);
+        return (unsigned char)va_arg(vargs, unsigned int);
     } else if (length & L_SHORT) {
-        return (unsigned short)va_arg(*vargs, unsigned int);
+        return (unsigned short)va_arg(vargs, unsigned int);
     } else if (length & L_LONGLONG) {
-        return (unsigned long long)va_arg(*vargs, unsigned long long);
+        return (unsigned long long)va_arg(vargs, unsigned long long);
     } else if (length & L_INTMAX) {
-        return va_arg(*vargs, uintmax_t);
+        return va_arg(vargs, uintmax_t);
     } else if (length & L_SIZET) {
-        return (size_t)va_arg(*vargs, size_t);
+        return (size_t)va_arg(vargs, size_t);
     } else if (length & L_PTRDIFF) {
-        return (ptrdiff_t)va_arg(*vargs, ptrdiff_t);
+        return (ptrdiff_t)va_arg(vargs, ptrdiff_t);
     } else {
-        return (unsigned int)va_arg(*vargs, unsigned int);
+        return (unsigned int)va_arg(vargs, unsigned int);
     }
 }
 
-long double read_double(va_list* vargs, Length length) {
+long double read_double(va_list vargs, Length length) {
     if (length & L_LONGLONG) {
-        return va_arg(*vargs, long double);
+        return va_arg(vargs, long double);
     } else {
-        return (double)va_arg(*vargs, double);
+        return (double)va_arg(vargs, double);
     }
 }
 
-String* read_char(va_list* vargs, Length length) {
+String* read_char(va_list vargs, Length length) {
     String* s = malloc(sizeof(String));
     if (s == NULL) {
         return NULL;
@@ -113,7 +113,7 @@ String* read_char(va_list* vargs, Length length) {
             free(s);
             return NULL;
         }
-        wint_t c = va_arg(*vargs, wint_t);
+        wint_t c = va_arg(vargs, wint_t);
         mbstate_t state;
         memset(&state, 0, sizeof(state));
         s->size = wcrtomb(s->chars, c, &state);
@@ -126,19 +126,19 @@ String* read_char(va_list* vargs, Length length) {
             free(s);
             return NULL;
         }
-        s->chars[0] = (char)va_arg(*vargs, int);
+        s->chars[0] = (char)va_arg(vargs, int);
         s->size = 1;
     }
     return s;
 }
 
-String* read_string(va_list* vargs, Length length) {
+String* read_string(va_list vargs, Length length) {
     String* s = malloc(sizeof(String));
     if (s == NULL) {
         return NULL;
     }
     if (length & L_LONG) {
-        wchar_t* ws = va_arg(*vargs, wchar_t*);
+        wchar_t* ws = va_arg(vargs, wchar_t*);
         s->size = wcstombs(NULL, ws, 0);
         if (s->size == (size_t)-1) {
             return NULL;
@@ -150,7 +150,7 @@ String* read_string(va_list* vargs, Length length) {
         }
         wcstombs(s->chars, ws, s->size + 1);
     } else {
-        char* s_arg = va_arg(*vargs, char*);
+        char* s_arg = va_arg(vargs, char*);
         s->size = strlen(s_arg);
         s->chars = malloc((s->size + 1) * sizeof(char));
         if (s->chars == NULL) {
@@ -175,7 +175,7 @@ bool resize_args(Args* args, size_t size) {
     return true;
 }
 
-bool read_arg(Args* args, const char* restrict* fmt_orig, va_list* vargs) {
+bool read_arg(Args* args, const char* restrict* fmt_orig, va_list vargs) {
     const char* restrict fmt = *fmt_orig;
     fmt++;
     bool correct_position = false;
@@ -259,7 +259,7 @@ bool read_arg(Args* args, const char* restrict* fmt_orig, va_list* vargs) {
         if (arg == NULL) {
             return false;
         }
-        *arg = va_arg(*vargs, void*);
+        *arg = va_arg(vargs, void*);
         args->args[args->size] = arg;
         break;
     }
@@ -311,7 +311,7 @@ bool read_arg(Args* args, const char* restrict* fmt_orig, va_list* vargs) {
     return true;
 }
 
-Args* args_init(const char* restrict fmt, va_list* vargs) {
+Args* args_init(const char* restrict fmt, va_list vargs) {
     Args* args = malloc(sizeof(Args));
     if (args == NULL) {
         return NULL;
@@ -334,7 +334,6 @@ Args* args_init(const char* restrict fmt, va_list* vargs) {
             fmt++;
         }
     }
-    va_end(*vargs);
     return args;
 }
 

@@ -202,9 +202,15 @@ int arg_parse(const char* restrict* fmt, Args* args, Flags flags) {
 }
 
 int r_printf(const char* restrict fmt, ...) {
-    va_list vargs;
-    va_start(vargs, fmt);
-    Args* args = args_init(fmt, &vargs);
+    va_list va;
+    va_start(va, fmt);
+    int ret = r_vprintf(fmt, va);
+    va_end(va);
+    return ret;
+}
+
+int r_vprintf(const char* restrict fmt, va_list va) {
+    Args* args = args_init(fmt, va);
     if (args == NULL) {
         return -1;
     }
