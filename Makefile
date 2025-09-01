@@ -4,7 +4,7 @@ DYNAMIC=$(NAME).so
 
 CC?=gcc
 CFLAGS?=-Wall -Wextra -pedantic -g3 -std=c99
-CFLAGS+=-Iinclude
+CFLAGS+=-Iinclude -MMD -MP
 LD?=$(CC)
 LDFLAGS?=-lm
 AR=ar
@@ -16,6 +16,7 @@ OBJDIR=obj
 SRCS:=r_printf.c r_fmtprint.c r_args.c r_math.c
 SRCS:=$(SRCS:%=$(SRCDIR)/%)
 OBJS:=$(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+DEPS:=$(OBJS:.o=.d)
 
 .PHONY: clean fclean all
 
@@ -45,3 +46,5 @@ clean:
 
 fclean: clean
 	$(RM) $(OBJS) $(NAME).a $(NAME).so test
+
+-include $(DEPS)
