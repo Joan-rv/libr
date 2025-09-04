@@ -3,6 +3,7 @@
 #include <locale.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 int main() {
     char* fmt =
@@ -30,4 +31,10 @@ int main() {
     printf("r_abs(-36)=%d\n", r_abs(-36));
     printf("r_gcd(4, -36)=%d\n", r_gcd(4, -36));
     printf("r_lcm(4, -36)=%d\n", r_lcm(4, -36));
+
+    char* buf = r_alloc_n(r_libc_allocator, char, 10);
+    char str[10] = "test str\n";
+    memcpy(buf, str, 10 * sizeof(char));
+    printf("%s", buf);
+    r_free_n(r_libc_allocator, buf, 10);
 }

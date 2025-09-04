@@ -14,8 +14,12 @@ static void libc_free(void* ptr, size_t size, void* ctx) {
     free(ptr);
 }
 
-const r_allocator_t r_libc_allocator = {
+const r_allocator_vtable_t r_libc_allocator_vtable = {
     .alloc = libc_alloc,
     .free = libc_free,
+};
+
+const r_allocator_t r_libc_allocator = {
+    .vtable = &r_libc_allocator_vtable,
     .ctx = NULL,
 };
