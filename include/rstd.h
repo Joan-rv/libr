@@ -24,8 +24,9 @@ typedef struct r_allocator {
     void* ctx;
 } r_allocator_t;
 
-#define r_alloc(a, T) a.vtable->alloc(sizeof(T), __alignof(T), a.ctx)
-#define r_alloc_n(a, T, n) a.vtable->alloc(n * sizeof(T), __alignof(T), a.ctx)
+#define r_alloc(a, T) (T*)a.vtable->alloc(sizeof(T), __alignof(T), a.ctx)
+#define r_alloc_n(a, T, n)                                                     \
+    (T*)a.vtable->alloc(n * sizeof(T), __alignof(T), a.ctx)
 #define r_free(a, p) a.vtable->free((p), sizeof(*(p)), a.ctx)
 #define r_free_n(a, p, n) a.vtable->free((p), n * sizeof(*(p)), a.ctx)
 
