@@ -19,9 +19,12 @@ SRCS:=$(SRCS:%=$(SRCDIR)/%)
 OBJS:=$(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 DEPS:=$(OBJS:.o=.d)
 
-.PHONY: clean fclean all
+.PHONY: clean fclean all check
 
-all: test static dynamic
+all: static dynamic
+
+check: test
+	./test | diff - test.output
 
 test: obj/test.o $(NAME).a
 	$(LD) $(LDFLAGS) -lm $^ -o $@
