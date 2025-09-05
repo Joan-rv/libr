@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int main() {
+int main(void) {
     char* fmt =
         "Hi %c, %lc, %-010.5lld, %0+10ld, % hd, %+020u, %+020.15hhu, %#010lo, "
         "%#010llX, %10p, "
@@ -32,9 +32,25 @@ int main() {
     printf("r_gcd(4, -36)=%d\n", r_gcd(4, -36));
     printf("r_lcm(4, -36)=%d\n", r_lcm(4, -36));
 
-    char* buf = r_alloc_n(r_libc_allocator, char, 10);
+    const r_allocator_t a = r_libc_allocator;
+    char* buf = r_alloc_n(a, char, 10);
     char str[10] = "test str\n";
     memcpy(buf, str, 10 * sizeof(char));
     printf("%s", buf);
-    r_free_n(r_libc_allocator, buf, 10);
+    r_free_n(a, buf, 10);
+
+    struct {
+        int* data;
+        size_t len, cap;
+    } test_da = {0};
+    for (int i = -10; i <= 10; ++i) {
+        r_da_append(a, &test_da, i);
+    }
+    if (test_da.len > 0)
+        printf("%d", test_da.data[0]);
+    for (size_t i = 1; i < test_da.len; ++i) {
+        printf(", %d", test_da.data[i]);
+    }
+    putchar('\n');
+    r_da_free(a, &test_da);
 }

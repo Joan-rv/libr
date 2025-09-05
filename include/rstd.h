@@ -32,6 +32,41 @@ typedef struct r_allocator {
 
 extern const r_allocator_t r_libc_allocator;
 
+/* ------- DYNAMIC ARRAYS -------- */
+#define R_DA_INIT_CAP 8
+#define r_da_reserve(a, da, n)                                                 \
+    do {                                                                       \
+        if (n > (da)->cap) {                                                   \
+            size_t new_cap = (da)->cap ? 2 * (da)->cap : R_DA_INIT_CAP;        \
+            if (new_cap < n)                                                   \
+                new_cap = n;                                                   \
+            void* new_data = r_alloc_n(a, __typeof(*(da)->data), new_cap);     \
+            if (new_data) {                                                    \
+                if ((da)->data)                                                \
+                    memcpy(new_data, (da)->data,                               \
+                           (da)->len * sizeof(*(da)->data));                   \
+                r_free_n(a, (da)->data, (da)->cap);                            \
+                (da)->data = new_data;                                         \
+                (da)->cap = new_cap;                                           \
+            }                                                                  \
+        }                                                                      \
+    } while (0)
+
+#define r_da_append(a, da, v)                                                  \
+    do {                                                                       \
+        r_da_reserve(a, da, (da)->len + 1);                                    \
+        if ((da)->cap > (da)->len)                                             \
+            (da)->data[(da)->len++] = v;                                       \
+    } while (0)
+
+#define r_da_free(a, da)                                                       \
+    do {                                                                       \
+        r_free_n(a, (da)->data, (da)->cap);                                    \
+        (da)->data = NULL;                                                     \
+        (da)->len = 0;                                                         \
+        (da)->cap = 0;                                                         \
+    } while (0)
+
 /* -------- UTILS -------- */
 #define R_UNUSED(v) (void)(v)
 
