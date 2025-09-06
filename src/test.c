@@ -39,6 +39,10 @@ int main(void) {
     char* buf = r_alloc_n(a, char, 10);
     char str[10] = "test str\n";
     memcpy(buf, str, 10 * sizeof(char));
+    buf = r_realloc(a, buf, 10, 12);
+    buf[9] = '1';
+    buf[10] = '\n';
+    buf[11] = '\0';
     printf("%s", buf);
     r_free_n(a, buf, 10);
 

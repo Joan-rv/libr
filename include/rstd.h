@@ -2,6 +2,7 @@
 #define RSTD_H
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 /* -------- IO -------- */
@@ -16,6 +17,10 @@ int r_lcm(int a, int b);
 /* -------- ALLOCATION -------- */
 typedef struct r_allocator_vtable {
     void* (*alloc)(size_t size, size_t alignment, void* ctx);
+    bool (*resize)(void* ptr, size_t alignment, size_t old_size,
+                   size_t new_size, void* ctx);
+    void* (*remap)(void* ptr, size_t alignment, size_t old_size,
+                   size_t new_size, void* ctx);
     void (*free)(void* ptr, size_t size, void* ctx);
 } r_allocator_vtable_t;
 
@@ -27,6 +32,9 @@ typedef struct r_allocator {
 #define r_alloc(a, T) (T*)(a).vtable->alloc(sizeof(T), __alignof(T), (a).ctx)
 #define r_alloc_n(a, T, n)                                                     \
     (T*)(a).vtable->alloc(n * sizeof(T), __alignof(T), (a).ctx)
+#define r_realloc(a, ptr, old_n, new_n)                                        \
+    (__typeof(ptr))(a).vtable->remap(ptr, __alignof(*ptr), old_n, new_n,       \
+                                     (a).ctx)
 #define r_free(a, p) (a).vtable->free((p), sizeof(*(p)), (a).ctx)
 #define r_free_n(a, p, n) (a).vtable->free((p), n * sizeof(*(p)), (a).ctx)
 
