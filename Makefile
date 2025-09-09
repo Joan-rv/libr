@@ -14,7 +14,7 @@ MKDIR=mkdir -p
 
 SRCDIR=src
 OBJDIR=obj
-SRCS:=r_printf.c r_fmtprint.c r_args.c r_math.c r_alloc.c
+SRCS:=r_printf.c r_fmtprint.c r_args.c r_math.c r_alloc.c r_str.c test.c
 SRCS:=$(SRCS:%=$(SRCDIR)/%)
 OBJS:=$(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 DEPS:=$(OBJS:.o=.d)
