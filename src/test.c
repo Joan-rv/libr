@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 
+R_ARR_DECLARE(int, arr)
+R_ARR_DEFINE(int, arr)
+
 int main(void) {
     char* ptr = (char*)0xcafebabe;
     char* fmt =
@@ -36,22 +39,19 @@ int main(void) {
     printf("r_lcm(4, -36)=%d\n", r_lcm(4, -36));
 
     const r_allocator_t a = r_libc_allocator;
-    char* buf = r_alloc_n(a, char, 10);
+    char* buf = r_alloc_n(char, 10, a);
     char str[10] = "test str\n";
     memcpy(buf, str, 10 * sizeof(char));
-    buf = r_realloc(a, buf, 10, 12);
+    buf = r_realloc(buf, 10, 12, a);
     buf[9] = '1';
     buf[10] = '\n';
     buf[11] = '\0';
     printf("%s", buf);
-    r_free_n(a, buf, 10);
+    r_free_n(buf, 10, a);
 
-    struct {
-        int* data;
-        size_t len, cap;
-    } test_da = {0};
+    arr_da_t test_da = {0};
     for (int i = -10; i <= 10; ++i) {
-        r_da_append(a, &test_da, i);
+        arr_append(&test_da, i, a);
     }
     if (test_da.len > 0)
         printf("%d", test_da.data[0]);
@@ -59,5 +59,5 @@ int main(void) {
         printf(", %d", test_da.data[i]);
     }
     putchar('\n');
-    r_da_free(a, &test_da);
+    arr_free(&test_da, a);
 }

@@ -29,51 +29,61 @@ typedef struct r_allocator {
     void* ctx;
 } r_allocator_t;
 
-#define r_alloc(a, T) (T*)(a).vtable->alloc(sizeof(T), __alignof(T), (a).ctx)
-#define r_alloc_n(a, T, n)                                                     \
+#define r_alloc(T, a) (T*)(a).vtable->alloc(sizeof(T), __alignof(T), (a).ctx)
+#define r_alloc_n(T, n, a)                                                     \
     (T*)(a).vtable->alloc(n * sizeof(T), __alignof(T), (a).ctx)
-#define r_realloc(a, ptr, old_n, new_n)                                        \
+#define r_realloc(ptr, old_n, new_n, a)                                        \
     (__typeof(ptr))(a).vtable->remap(ptr, __alignof(*ptr), old_n, new_n,       \
                                      (a).ctx)
-#define r_free(a, p) (a).vtable->free((p), sizeof(*(p)), (a).ctx)
-#define r_free_n(a, p, n) (a).vtable->free((p), n * sizeof(*(p)), (a).ctx)
+#define r_free(p, a) (a).vtable->free((p), sizeof(*(p)), (a).ctx)
+#define r_free_n(p, n, a) (a).vtable->free((p), n * sizeof(*(p)), (a).ctx)
 
 extern const r_allocator_t r_libc_allocator;
 
 /* ------- DYNAMIC ARRAYS -------- */
 #define R_DA_INIT_CAP 8
-#define r_da_reserve(a, da, n)                                                 \
-    do {                                                                       \
-        if (n > (da)->cap) {                                                   \
-            size_t new_cap = (da)->cap ? 2 * (da)->cap : R_DA_INIT_CAP;        \
-            if (new_cap < n)                                                   \
-                new_cap = n;                                                   \
-            void* new_data = r_alloc_n(a, __typeof(*(da)->data), new_cap);     \
-            if (new_data) {                                                    \
-                if ((da)->data)                                                \
-                    memcpy(new_data, (da)->data,                               \
-                           (da)->len * sizeof(*(da)->data));                   \
-                r_free_n(a, (da)->data, (da)->cap);                            \
-                (da)->data = new_data;                                         \
-                (da)->cap = new_cap;                                           \
-            }                                                                  \
-        }                                                                      \
-    } while (0)
 
-#define r_da_append(a, da, v)                                                  \
-    do {                                                                       \
-        r_da_reserve(a, da, (da)->len + 1);                                    \
-        if ((da)->cap > (da)->len)                                             \
-            (da)->data[(da)->len++] = v;                                       \
-    } while (0)
+#define R_ARR_DECLARE(type, name)                                              \
+    typedef struct name##_da {                                                 \
+        type* data;                                                            \
+        size_t len, cap;                                                       \
+    } name##_da_t;                                                             \
+    typedef struct name##_va {                                                 \
+        type* data;                                                            \
+        size_t len;                                                            \
+    } name##_va_t;                                                             \
+    bool name##_reserve(name##_da_t* da, size_t cap, r_allocator_t a);         \
+    bool name##_append(name##_da_t* da, type v, r_allocator_t a);              \
+    void name##_free(name##_da_t* da, r_allocator_t a);                        \
+    name##_va_t name##_as_view(const name##_da_t da);
 
-#define r_da_free(a, da)                                                       \
-    do {                                                                       \
-        r_free_n(a, (da)->data, (da)->cap);                                    \
-        (da)->data = NULL;                                                     \
-        (da)->len = 0;                                                         \
-        (da)->cap = 0;                                                         \
-    } while (0)
+#define R_ARR_DEFINE(type, name)                                               \
+    bool name##_reserve(name##_da_t* da, size_t cap, r_allocator_t a) {        \
+        if (da->cap >= cap)                                                    \
+            return true;                                                       \
+        size_t new_cap = da->cap == 0 ? R_DA_INIT_CAP : da->cap * 2;           \
+        if (new_cap < cap)                                                     \
+            new_cap = cap;                                                     \
+        type* new_data = r_realloc(da->data, da->cap, new_cap, a);             \
+        if (!new_data)                                                         \
+            return false;                                                      \
+        da->data = new_data;                                                   \
+        da->cap = new_cap;                                                     \
+        return true;                                                           \
+    }                                                                          \
+    bool name##_append(name##_da_t* da, type v, r_allocator_t a) {             \
+        if (!name##_reserve(da, da->len + 1, a))                               \
+            return false;                                                      \
+        da->data[da->len++] = v;                                               \
+        return true;                                                           \
+    }                                                                          \
+    void name##_free(name##_da_t* da, r_allocator_t a) {                       \
+        r_free_n(da->data, da->cap, a);                                        \
+        *da = (name##_da_t){0};                                                \
+    }                                                                          \
+    name##_va_t name##_as_view(const name##_da_t da) {                         \
+        return (name##_va_t){.data = da.data, .len = da.len};                  \
+    }
 
 /* -------- UTILS -------- */
 #define R_UNUSED(v) (void)(v)
