@@ -1,5 +1,6 @@
 #include <rstd.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <locale.h>
 #include <math.h>
@@ -60,4 +61,11 @@ int main(void) {
     }
     putchar('\n');
     arr_free(&test_da, a);
+
+    r_str_da_t s = {0};
+    for (char c = 'a'; c <= 'g'; c++) {
+        r_str_append(&s, c, a);
+    }
+    assert(r_str_eq(r_str_as_view(s), R_STR("abcdefg")));
+    r_str_free(&s, a);
 }

@@ -33,8 +33,9 @@ typedef struct r_allocator {
 #define r_alloc_n(T, n, a)                                                     \
     (T*)(a).vtable->alloc(n * sizeof(T), __alignof(T), (a).ctx)
 #define r_realloc(ptr, old_n, new_n, a)                                        \
-    (__typeof(ptr))(a).vtable->remap(ptr, __alignof(*ptr), old_n, new_n,       \
-                                     (a).ctx)
+    (__typeof(ptr))(a).vtable->remap(ptr, __alignof(*(ptr)),                   \
+                                     old_n * sizeof(*(ptr)),                   \
+                                     new_n * sizeof(*(ptr)), (a).ctx)
 #define r_free(p, a) (a).vtable->free((p), sizeof(*(p)), (a).ctx)
 #define r_free_n(p, n, a) (a).vtable->free((p), n * sizeof(*(p)), (a).ctx)
 
@@ -55,7 +56,8 @@ extern const r_allocator_t r_libc_allocator;
     bool name##_reserve(name##_da_t* da, size_t cap, r_allocator_t a);         \
     bool name##_append(name##_da_t* da, type v, r_allocator_t a);              \
     void name##_free(name##_da_t* da, r_allocator_t a);                        \
-    name##_va_t name##_as_view(const name##_da_t da);
+    name##_va_t name##_as_view(const name##_da_t da);                          \
+    bool name##_eq(name##_va_t lhs, name##_va_t rhs);
 
 #define R_ARR_DEFINE(type, name)                                               \
     bool name##_reserve(name##_da_t* da, size_t cap, r_allocator_t a) {        \
@@ -83,7 +85,19 @@ extern const r_allocator_t r_libc_allocator;
     }                                                                          \
     name##_va_t name##_as_view(const name##_da_t da) {                         \
         return (name##_va_t){.data = da.data, .len = da.len};                  \
+    }                                                                          \
+    bool name##_eq(name##_va_t lhs, name##_va_t rhs) {                         \
+        if (lhs.len != rhs.len)                                                \
+            return false;                                                      \
+        for (size_t i = 0; i < lhs.len; i++)                                   \
+            if (lhs.data[i] != rhs.data[i])                                    \
+                return false;                                                  \
+        return true;                                                           \
     }
+
+/* -------- STR -------- */
+R_ARR_DECLARE(char, r_str)
+#define R_STR(s) (r_str_va_t){.data = s, .len = sizeof(s) - 1}
 
 /* -------- UTILS -------- */
 #define R_UNUSED(v) (void)(v)
